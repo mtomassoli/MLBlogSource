@@ -1,0 +1,268 @@
+<h1 id="q-learning"><span class="header-section-number">1</span> Q-learning</h1>
+<p>In Reinforcement Learning we are interested in maximizing the <em>Expected Return</em> so we usually work directly with those expectations. For instance, in <em>Q-learning</em> with <em>function approximation</em> we want to minimize the error <span class="math display">\[\begin{align}
+\mathbb{E}_{s,a}\left[\left(r(s,a)+\gamma\mathbb{E}_{s&#39;}\left[\max_{a&#39;}Q(s&#39;,a&#39;)\right]-Q(s,a)\right)^{2}\right] &amp; =\nonumber \\
+\mathbb{E}_{s,a,s&#39;}\left[\left(r(s,a)+\gamma\max_{a&#39;}Q(s&#39;,a&#39;)-Q(s,a)\right)^{2}\right]\label{eq:classic_td_error}
+\end{align}\]</span> by moving <span class="math inline">\(Q(s,a)\)</span> towards the <em>target</em> <span class="math inline">\(r(s,a)+\gamma\max_{a&#39;}Q(s&#39;,a&#39;)\)</span>, where <span class="math inline">\(r(s,a)\)</span> is the <em>expected immediate reward</em>. In <em>semi-gradient</em> methods we pretend that the target is constant and in <em>DQN<span class="citation" data-cites="mnih2015human">(Mnih et al. <a href="#ref-mnih2015human">2015</a>)</span></em> we even <em>freeze</em> the “target network” to improve stability even further.</p>
+<p>The main idea of <em>Distributional RL<span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span></em> is to work directly with the <em>full distribution</em> of the return rather than with its expectation. Let the random variable <span class="math inline">\(Z(s,a)\)</span> be the return obtained by starting from state <span class="math inline">\(s\)</span>, performing action <span class="math inline">\(a\)</span> and then following the current policy. Then <span class="math display">\[\begin{align*}Q(s,a)=\mathbb{E}[Z(s,a)].\end{align*}\]</span> Instead of trying to minimize the error <span class="math inline">\(\ref{eq:classic_td_error}\)</span>, which is basically a distance between expectations, we can instead try to minimize a <em>distributional</em> error, which is a distance between full distributions: <span class="math display">\[\begin{align}
+\sup_{s,a}\mathrm{dist}\left(R(s,a)+\gamma Z(s&#39;,a^{*}),Z(s,a)\right)\label{eq:distrib_td_error}\\
+s&#39;\sim p(\cdot|s,a)\nonumber 
+\end{align}\]</span> where you can mentally replace <span class="math inline">\(\sup\)</span> with <span class="math inline">\(\max\)</span>, <span class="math inline">\(R(s,a)\)</span> is the random variable for the immediate reward, and <span class="math display">\[\begin{align*}a^{*}=\underset{a&#39;}{\mathrm{arg\,max}\,}Q(s&#39;,a&#39;)=\underset{a&#39;}{\mathrm{arg\,max}\,}\mathbb{E}[Z(s&#39;,a&#39;)].\end{align*}\]</span> Note that we’re still using <span class="math inline">\(Q(s,a)\)</span>, i.e. the expected return, to decide which action to pick, but we’re trying to optimize <em>distributions</em> rather than <em>expectations</em> (of those distributions).</p>
+<p>There’s a subtlety in expression <span class="math inline">\(\ref{eq:distrib_td_error}\)</span>: if <span class="math inline">\(s,a\)</span> are constant, <span class="math inline">\(Z(s,a)\)</span> is a random variable, but even more so when <span class="math inline">\(s\)</span> or <span class="math inline">\(a\)</span> are themselves random variables!</p>
+<h1 id="policy-evaluation"><span class="header-section-number">2</span> Policy Evaluation</h1>
+<p>Let’s consider <em>policy evaluation</em> for a moment. In this case we want to minimize <span class="math display">\[\begin{align*}\mathbb{E}_{s,a,s&#39;,a&#39;}\left[\left(r(s,a)+\gamma Q(s&#39;,a&#39;)-Q(s,a)\right)^{2}\right]\end{align*}\]</span> We can define the <em>Bellman operator</em> <em>for evaluation</em> as follows: <span class="math display">\[\begin{align*}(\mathcal{T}^{\pi}Q)(s,a)=\mathbb{E}_{s&#39;\sim p(\cdot|s,a),a&#39;\sim\pi(\cdot|s&#39;)}[r(s,a)+\gamma Q(s&#39;,a&#39;)]\end{align*}\]</span> The Bellman operator <span class="math inline">\(\mathcal{T}^{\pi}\)</span> is a <span class="math inline">\(\gamma\)</span><em>-contraction</em>, meaning that <span class="math display">\[\begin{align*}\mathrm{dist}\left(\mathcal{T}Q_{1},\mathcal{T}Q_{2}\right)\leq\gamma\mathrm{dist}\left(Q_{1},Q_{2}\right),\end{align*}\]</span> so, since <span class="math inline">\(Q^{\pi}\)</span> is a <em>unique</em> fixed point (i.e. <span class="math inline">\(\mathcal{T}Q=Q\iff Q=Q^{\pi}\)</span>), we must have that <span class="math inline">\(\mathcal{T}^{\infty}Q=Q^{\pi}\)</span>, disregarding approximation errors.</p>
+<p>It turns out <span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span> that this result can be ported to the distributional setting. Let’s define the <em>Bellman distribution operator for evaluation</em> in an analogous way: <span class="math display">\[\begin{align*}
+(\mathcal{T}_{D}^{\pi}Z)(s,a) &amp; =R(s,a)+\gamma Z(s&#39;,a&#39;)\\
+s&#39; &amp; \sim p(\cdot|s,a)\\
+a&#39; &amp; \sim\pi(\cdot|s&#39;)
+\end{align*}\]</span> <span class="math inline">\(\mathcal{T}_{D}^{\pi}\)</span> is a <em><span class="math inline">\(\gamma\)</span>-contraction</em> in the <em>Wasserstein distance <span class="math inline">\(\mathcal{W}\)</span>, i.e. <span class="math display">\[\begin{align*}\sup_{s,a}\mathcal{W}\left(\mathcal{T}_{D}^{\pi}Z_{1}(s,a),\mathcal{T}_{D}^{\pi}Z_{2}(s,a)\right)\leq\gamma\sup_{s,a}\mathcal{W}(Z_{1}(s,a),Z_{2}(s,a))\end{align*}\]</span></em> This isn’t true for the <em>KL divergence</em>.</p>
+<p>Unfortunately, this result doesn’t hold for the <em>control</em> (the one with the <span class="math inline">\(\max\)</span>) version of the distributional operator.</p>
+<h1 id="kl-divergence"><span class="header-section-number">3</span> KL divergence</h1>
+<h2 id="definition"><span class="header-section-number">3.1</span> Definition</h2>
+<p>I warn you that this subsection is <em>highly informal.</em></p>
+<p>If <span class="math inline">\(p\)</span> and <span class="math inline">\(q\)</span> are two distributions with same <em>support</em> (i.e. their <em>pdfs</em> are non-zero at the same points), then their KL divergence is defined as follows: <span class="math display">\[\begin{align*}\mathrm{KL}(p\|q)=\int p(x)\log\frac{p(x)}{q(x)}dx.\end{align*}\]</span></p>
+<p>Let’s consider the <em>discrete</em> case: <span class="math display">\[\begin{align*}\mathrm{KL}(p\|q)=\sum_{i=1}^{N}p(x_{i})\log\frac{p(x_{i})}{q(x_{i})}=\sum_{i=1}^{N}p(x_{i})[\log p(x_{i})-\log q(x_{i})].\end{align*}\]</span> As we can see, we’re basically comparing the <em>scores</em> at the points <span class="math inline">\(x_{1},\ldots,x_{N}\)</span>, weighting each comparison according to <span class="math inline">\(p(x_{i})\)</span>. Note that the KL doesn’t make use of the values <span class="math inline">\(x_{i}\)</span> directly: only their probabilities are used! Moreover, if <span class="math inline">\(p\)</span> and <span class="math inline">\(q\)</span> have different supports, the KL is undefined.</p>
+<h2 id="how-to-use-it"><span class="header-section-number">3.2</span> How to use it</h2>
+<p>Now say we’re using DQN and extract <span class="math inline">\((s,a,r,s&#39;)\)</span> from the <em>replay buffer</em>. A <em>sample</em> of the target distribution is <span class="math inline">\(r+\gamma Z(s&#39;,a^{*})\)</span>, where <span class="math inline">\(a^{*}=\mathrm{arg\,max}_{a&#39;}Q(s&#39;,a&#39;)\)</span>. We want to move <span class="math inline">\(Z(s,a)\)</span> towards this target (by keeping the target fixed).</p>
+<p>I called <span class="math inline">\(r+\gamma Z(s&#39;,a^{*})\)</span> a <em>sample</em> of a distribution, which might sound like a contradiction in terms, but it isn’t. This is just a sample because <span class="math inline">\(r\)</span> and <span class="math inline">\(s&#39;\)</span> are not random variables, but just samples. We still get a distribution though since <span class="math inline">\(Z(s&#39;,a^{*})\)</span> is a distribution. Indeed, to get a <em>single</em> sample <strong><em>from</em></strong> the <em>real</em> distribution, we should first sample <span class="math inline">\(r\)</span> and <span class="math inline">\(s&#39;\)</span>, and, finally, sample from the distribution <span class="math inline">\(r+\gamma Z(s&#39;,a^{*})\)</span>. Note that this is almost exactly what we’re doing since <span class="math inline">\(r\)</span> and <span class="math inline">\(s&#39;\)</span> extracted from the replay buffer were indeed sampled. The only difference is that instead of sampling from <span class="math inline">\(r+\gamma Z(s&#39;,a^{*})\)</span>, we use the full distribution (but based, again, on just samples of <span class="math inline">\(r\)</span> and <span class="math inline">\(s&#39;\)</span>).</p>
+<p>Let’s say we have a net which models <span class="math inline">\(Z\)</span> by taking a state <span class="math inline">\(s\)</span> and returning a distribution <span class="math inline">\(Z(s,a)\)</span> for each action. For instance, we can represent each distribution through a <em>softmax</em> like we often do in <em>Deep Learning</em> for <em>classification tasks</em>. In particular, let’s choose some fixed values <span class="math inline">\(x_{1},\ldots,x_{N}\)</span> for the support of all the distributions returned by the net. To simplify things, let’s make them <em>equidistant</em> so that <span class="math display">\[\begin{align*}x_{i+1}-x_{i}=d=(x_{N}-x_{1})/(N-1),\qquad i=1,\ldots,N-1\end{align*}\]</span> The pmf looks like a comb:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/discrete.svg" alt="Figure 1." class="86345huihsdfguhsjlkertvxgkh3498asdg:0.0%" style="width:100.0%" /><figcaption><em>Figure 1.</em></figcaption>
+</figure>
+<p>Since the values <span class="math inline">\(x_{1},\ldots,x_{N}\)</span> are fixed, we just have to return <span class="math inline">\(N\)</span> probabilities for each <span class="math inline">\(Z(s,a)\)</span>, so the net takes a single state and returns <span class="math inline">\(|\mathcal{A}|N\)</span> scalars, where <span class="math inline">\(|\mathcal{A}|\)</span> is the number of possible actions.</p>
+<p>If <span class="math inline">\(p_{1},\ldots,p_{N}\)</span> and <span class="math inline">\(q_{1},\ldots,q_{N}\)</span> are the probabilities of the two distributions <span class="math inline">\(p\)</span> and <span class="math inline">\(q\)</span>, then their KL is simply <span class="math display">\[\begin{align*}\mathrm{KL}(p\|q)=\sum_{i=1}^{N}p_{i}\log\frac{p_{i}}{q_{i}}=H(p,q)-H(p)\end{align*}\]</span> and if you’re optimizing wrt <span class="math inline">\(q\)</span> (i.e. you’re moving <span class="math inline">\(q\)</span> towards <span class="math inline">\(p\)</span>), then you can drop the <em>entropy</em> term.</p>
+<p>Also, we can recover <span class="math inline">\(Q(s,a)\)</span> very easily: <span class="math display">\[\begin{align*}Q(s,a)=\mathbb{E}[Z(s,a)]=\sum_{i=1}^{N}p_{i}x_{i}.\end{align*}\]</span></p>
+<p>The interesting part is the <em>transformation</em>. In distributional Q-learning we want to move <span class="math inline">\(Z(s,a)\)</span> towards <span class="math inline">\(r+\gamma Z(s&#39;,a^{*})\)</span>, but how do we put <span class="math inline">\(p\)</span> in “standard comb form”? This is the <em>projection part</em> described in <span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span> and it’s very easy. To form the target distribution we start from <span class="math inline">\(p=Z(s&#39;,a^{*})\)</span>, which is already in the standard form <span class="math inline">\(p_{1},\ldots,p_{N}\)</span> and we look at the pairs <span class="math inline">\((x_{1},p_{1}),\ldots,(x_{N},p_{N})\)</span> as if they represented <em>samples</em> with <em>weights</em>, which the authors of <span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span> call <em>atoms</em>. This means that we can transform the distribution <span class="math inline">\(p\)</span> just by transforming the position of its <em>atoms</em>. The transformed atoms corresponding to <span class="math inline">\(r+\gamma Z(s&#39;,a^{*})\)</span> are <span class="math display">\[\begin{align*}(r+\gamma x_{1},p_{1}),(r+\gamma x_{2},p_{2}),\ldots,(r+\gamma x_{N},p_{N}).\end{align*}\]</span> Note that the weights <span class="math inline">\(p_{i}\)</span> don’t change. The problem is that now we have atoms which aren’t in the standard positions <span class="math inline">\(x_{1},\ldots,x_{N}\)</span>. The solution proposed in <span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span> is to <em>split</em> each <em>misaligned</em> atom into the two closest <em>aligned</em> atoms by making sure to distribute its weight according to its distance from the two misaligned atoms:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/split.svg" alt="Figure 2. " id="fig:atom_splitting" class="86345huihsdfguhsjlkertvxgkh3498asdg:0.0%" style="width:100.0%" /><figcaption><em>Figure 2.</em> </figcaption>
+</figure>
+<p>Observe the proportions very carefully. Let’s say the <span style="color: green">green</span> atom has weight <span class="math inline">\(w.\)</span> For some constants <span class="math inline">\(c\)</span>, the <span style="color: green">green</span> atom is at distance <span class="math inline">\(3c\)</span> from <span class="math inline">\(x_{6}\)</span> and <span class="math inline">\(c\)</span> from <span class="math inline">\(x_{7}\)</span>. Indeed, the atom at <span class="math inline">\(x_{6}\)</span> receives weight <span class="math inline">\(\frac{1}{4}w\)</span> and the atom at <span class="math inline">\(x_{7}\)</span> weight <span class="math inline">\(\frac{3}{4}w\)</span>, which makes sense. Also, note that the <em>probability mass</em> is conserved so there’s no need to normalize after the splitting. Of course, since we need to split all the transformed atoms, individual aligned atoms can receive contributions from different atoms. We simply sum all the contributions. This is how the authors do it, but it’s certainly not the only way.</p>
+<h2 id="the-full-algorithm"><span class="header-section-number">3.3</span> The full algorithm</h2>
+<p>Here’s the algorithm taken directly (cut &amp; pasted) from <span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span>:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/KL_algo.png" alt="Figure 3." class="86345huihsdfguhsjlkertvxgkh3498asdg:15.0%" style="width:100.0%" /><figcaption><em>Figure 3.</em></figcaption>
+</figure>
+<p>Assume we’ve just picked <span class="math inline">\((x_{t},a_{t},r_{t},x_{t+1})\)</span> from the <em>replay buffer</em> in some variant of the DQN algorithm, so <span class="math inline">\(x\)</span> is used to indicate <em>states</em>. The <span class="math inline">\(z_{0},\ldots,z_{N-1}\)</span> are the fixed global positions of the atoms (i.e. our <span class="math inline">\(x_{1},\ldots,x_{N}\)</span> in figure <a href="#fig:atom_splitting">2</a>). Let’s assume there’s just a global <span class="math inline">\(\gamma\)</span>.</p>
+<p>Let’s go through the algorithm in detail assuming we’re using a neural network for <span class="math inline">\(Z\)</span>:</p>
+<ol>
+<li><p>We fead <span class="math inline">\(x_{t+1}\)</span> to our net which outputs an <span class="math inline">\(|\mathcal{A}|\times N\)</span> matrix <span class="math inline">\(M(x_{t+1})\)</span>, i.e. each row corresponds to a single action and contains the probabilities for the <span class="math inline">\(N\)</span> atoms. That is, the row for action <span class="math inline">\(a\)</span> contains the vector <span class="math display">\[\begin{align*}(p_{0}(x_{t+1},a),\ldots,p_{N-1}(x_{t+1},a))\end{align*}\]</span></p></li>
+<li><p>We compute all the <span class="math display">\[\begin{align*}Q(x_{t+1},a)=\mathbb{E}\left[Z(x_{t+1},a)\right]=\sum_{i=0}^{N-1}z_{i}p_{i}(x_{t+1},a)\end{align*}\]</span> as follows: <span class="math display">\[\begin{align*}Q(x_{t+1})=M(x_{t+1})\begin{bmatrix}z_{0}\\
+z_{1}\\
+\vdots\\
+z_{N-1}
+\end{bmatrix}.\end{align*}\]</span> Note that <span class="math inline">\(Q(x_{t+1})\)</span> is a column vector of length <span class="math inline">\(|\mathcal{A}|\)</span>.</p></li>
+<li><p>Now we can determine the optimum action <span class="math display">\[\begin{align*}a^{*}=\mathrm{arg\,max_{a}}Q(x_{t+1},a)\end{align*}\]</span> Let <span class="math inline">\(q=(q_{0},\ldots,q_{N-1})\)</span> be the row of <span class="math inline">\(M(x_{t+1})\)</span> corresponding to <span class="math inline">\(a^{*}\)</span>.</p></li>
+<li><p><span class="math inline">\(m_{0},\ldots,m_{N-1}\)</span> will accumulate the probabilities of the <em>aligned</em> atoms of the target distribution <span class="math inline">\(r_{t}+\gamma Z(x_{t+1},a^{*})\)</span>. We start by zeroing them.</p></li>
+<li><p>The <em>non-aligned</em> atoms of the target distribution are at positions <span class="math display">\[\begin{align*}\hat{\mathcal{T}}z_{j}=r_{t}+\gamma z_{j},\qquad j=0,\ldots,N-1\end{align*}\]</span> We clip those positions so that they are in <span class="math inline">\([V_{\mathrm{MIN}},V_{\mathrm{MAX}}]\)</span>, i.e. <span class="math inline">\([z_{0},z_{N-1}]\)</span>.</p></li>
+<li><p>Assuming that the adjacent aligned atoms are at distance <span class="math inline">\(\Delta z\)</span>, the indices of the closest <em>aligned</em> atoms on the left and on the right of <span class="math inline">\(\hat{\mathcal{T}}z_{j}\)</span> are, respectively: <span class="math display">\[\begin{align*}
+l &amp; =\left\lfloor \frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right\rfloor \\
+u &amp; =\left\lceil \frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right\rceil 
+\end{align*}\]</span></p></li>
+<li><p>Now we need to split the weight of <span class="math inline">\(\hat{\mathcal{T}}z_{j}\)</span>, which is <span class="math inline">\(q_{j}\)</span>, between <span class="math inline">\(m_{l}\)</span> and <span class="math inline">\(m_{r}\)</span> as we saw before. Note that <span class="math display">\[\begin{align*}
+(u)-(b_{j}) &amp; =\left(\frac{z_{u}-z_{0}}{\Delta z}\right)-\left(\frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right)=\frac{z_{u}-\hat{\mathcal{T}}z_{j}}{z_{u}-z_{l}}\\
+(b_{j})-(l) &amp; =\left(\frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right)-\left(\frac{z_{l}-z_{0}}{\Delta z}\right)=\frac{\hat{\mathcal{T}}z_{j}-z_{l}}{z_{u}-z_{l}}
+\end{align*}\]</span> which means that, as we said before, the weight <span class="math inline">\(q_{j}\)</span> is split between <span class="math inline">\(z_{l}\)</span> and <span class="math inline">\(z_{u}\)</span> (indeed, <span class="math inline">\(u-b_{j}+b_{j}-l=1)\)</span>, and the contribution to <span class="math inline">\(m_{l}\)</span> is proportional to the distance of <span class="math inline">\(\hat{\mathcal{T}}z_{j}\)</span> from <span class="math inline">\(z_{u}\)</span>. The more distant it is from <span class="math inline">\(z_{u}\)</span>, the higher the contribution to <span class="math inline">\(m_{l}\)</span>.</p></li>
+<li><p>Now we have the probabilities <span class="math inline">\(m_{0},\ldots,m_{N-1}\)</span> of the <em>aligned</em> atoms of <span class="math inline">\(r_{t}+\gamma Z(x_{t+1},a^{*})\)</span> and, of course, the probabilities <span class="math display">\[\begin{align*}p_{0}(x_{t},a_{t};\theta),\ldots,p_{N-1}(x_{t},a_{t};\theta)\end{align*}\]</span> of the <em>aligned</em> atoms of <span class="math inline">\(Z(x_{t},a)\)</span>, which are the ones we want to update. Thus <span class="math display">\[\begin{align*}
+\nabla_{\theta}\mathrm{KL}(m\|p_{\theta}) &amp; =\nabla_{\theta}\sum_{i=0}^{N-1}m_{i}\log\frac{m_{i}}{p_{\theta}}\\
+ &amp; =\nabla_{\theta}\left[H(m,p_{\theta})-H(m)\right]\\
+ &amp; =\nabla_{\theta}H(m,p_{\theta})
+\end{align*}\]</span> That is, we can just use the <em>cross-entropy</em> <span class="math display">\[\begin{align*}H(m,p_{\theta})=-\sum_{i=0}^{N-1}m_{i}\log p_{i}(x_{t},a_{t};\theta)\end{align*}\]</span> for the <em>loss</em>.</p></li>
+</ol>
+<h1 id="wasserstein-distance"><span class="header-section-number">4</span> Wasserstein distance</h1>
+<p>The first paper <span class="citation" data-cites="DBLP:journals/corr/BellemareDM17">(M. G. Bellemare, Dabney, and Munos <a href="#ref-DBLP:journals/corr/BellemareDM17">2017</a>)</span> about <em>distributional RL</em> left a <em>gap</em> between theory and practice because the theory requires the <em>Wasserstein distance</em>, but in practice they used a KL-based procedure.</p>
+<p>The second paper <span class="citation" data-cites="2017arXiv171010044D">(Dabney et al. <a href="#ref-2017arXiv171010044D">2017</a>)</span> closes the gap in a very elegant way.</p>
+<h2 id="subsec:A-different-idea"><span class="header-section-number">4.1</span> A different idea</h2>
+<p>This time I won’t start with a definition, but with an <em>idea</em>. Rather than use atoms with <em>fixed positions</em>, but <em>variable weights</em>, let’s do the opposite: let’s use atoms with <em>fixed weights</em>, but <em>variable positions</em>. Moreover, let’s use the same weight for each atom, i.e. <span class="math inline">\(1/N\)</span> if the atoms are <span class="math inline">\(N\)</span>.</p>
+<p>But how do we represent distributions this way? It’s very simple, really. We slice up the distribution we want to represent into <span class="math inline">\(N\)</span> slices of <span class="math inline">\(1/N\)</span> mass and put each atom at the <em>median</em> of a slice. This makes sense; in fact, the atoms weigh <span class="math inline">\(1/N\)</span> as well:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/quantiles.svg" alt="Figure 4. The distribution has been sliced up into slices of equal probability mass and red points have been placed in the center of mass of each slice. For the code, see subsection . This image is produced through sampling as described in the following sections." id="fig:sliced_up_distrib" class="86345huihsdfguhsjlkertvxgkh3498asdg:5.0%" style="width:100.0%" /><figcaption><em>Figure 4.</em> The distribution has been sliced up into slices of equal <em>probability mass</em> and red points have been placed in the center of mass of each slice. For the code, see subsection <a href="#subsec:Some-code">4.2.4</a>. This image is produced through sampling as described in the following sections.</figcaption>
+</figure>
+<p>If the atoms are <span class="math inline">\(N\)</span> then the <span class="math inline">\(i\)</span>-th atom corresponds to a quantile of <span class="math display">\[\begin{align*}\hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N\end{align*}\]</span></p>
+<h2 id="how-do-we-determine-a-quantile"><span class="header-section-number">4.2</span> How do we determine a quantile?</h2>
+<h3 id="determining-the-median"><span class="header-section-number">4.2.1</span> Determining the median</h3>
+<p>The median is just the <em><span class="math inline">\(0.5\)</span> quantile</em>, i.e. a point which has <span class="math inline">\(0.5\)</span> mass on the left and <span class="math inline">\(0.5\)</span> mass on the right. In other words, it splits the probability mass in half. So let’s say we have a random variable <span class="math inline">\(X\)</span> and we know how to draw samples. How can we compute the median? We start with a guess <span class="math inline">\(\theta\)</span>, draw some samples and if <span class="math inline">\(\theta\)</span> has more samples on the left than on the right, we move it a little to the left. By symmetry, we move it to the right if it has more samples on the right. Then we repeat the process and keep updating <span class="math inline">\(\theta\)</span> until convergence.</p>
+<p>We should move <span class="math inline">\(\theta\)</span> in proportion to the disparity between the two sides, so let’s decide that each sample on the <em>left</em> subtract <span class="math inline">\(\alpha\)</span> and each sample on the <em>right</em> add <span class="math inline">\(\alpha\)</span>. Basically, <span class="math inline">\(\alpha\)</span> is a <em>learning rate</em>. If it’s too small the algorithm takes too long and if it’s too big the algorithm <em>fluctuates</em> a lot around the optimal solution. Here’s a picture about this method:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/median.svg" alt="Figure 5." class="86345huihsdfguhsjlkertvxgkh3498asdg:0.0%" style="width:100.0%" /><figcaption><em>Figure 5.</em></figcaption>
+</figure>
+<p>We reach the equilibrium when <span class="math inline">\(\theta\)</span> is the median. Doesn’t this look like <em>SGD</em> with a <em>minibatch</em> of <span class="math inline">\(16\)</span> samples and learning rate <span class="math inline">\(\alpha\)</span>? What’s the corresponding <em>loss</em>? The loss is clearly <span class="math display">\[\begin{align}L_{\theta}=\mathbb{E}_{X}[|X-\theta|]\label{eq:median_loss}\end{align}\]</span> This should look familiar to any statistician. Note that in the picture above we’re adding the gradients, but when we <em>minimize</em> we subtract them so gradients on the left of <span class="math inline">\(\theta\)</span> must be <span class="math inline">\(1\)</span> and on the right <span class="math inline">\(-1\)</span>: <span class="math display">\[\begin{align*}\nabla_{\theta}L_{\theta}=\begin{cases}
+\nabla_{\theta}(\theta-X)=1 &amp; \text{if }X&lt;\theta\\
+\nabla_{\theta}(X-\theta)=-1 &amp; \text{if }X\geq\theta
+\end{cases}\end{align*}\]</span></p>
+<h3 id="determining-any-quantile"><span class="header-section-number">4.2.2</span> Determining any quantile</h3>
+<p>We can generalize this to any quantile by using different <em>weights</em> for the left and right samples. Let’s omit the <span class="math inline">\(\alpha\)</span> for more clarity, since we know it’s just the learning rate by now. If we want the probability mass on the left of <span class="math inline">\(\theta\)</span> to be <span class="math inline">\(\tau\)</span>, we need to use weight <span class="math inline">\(1-\tau\)</span> for the samples on the left and <span class="math inline">\(\tau\)</span> for the ones on the right. This works because, when <span class="math inline">\(\theta\)</span> is the <span class="math inline">\(\tau\)</span> quantile, if we sample <span class="math inline">\(S\)</span> samples then, <em>on average</em>, the samples on the left will be <span class="math inline">\(\tau S\)</span> and the ones on the right <span class="math inline">\((1-\tau)S\)</span>. Multiplying the number of samples by their weights, we get an equality: <span class="math display">\[\begin{align*}(\tau S)(1-\tau)=((1-\tau)S)(\tau)\end{align*}\]</span> so both sides <em>pull</em> with equal strength <em>if and only if</em> <span class="math inline">\(\theta\)</span> is the <span class="math inline">\(\tau\)</span> quantile.</p>
+<p>Basically, we need to scale the weights/gradients on the left of <span class="math inline">\(\theta\)</span> by <span class="math inline">\(1-\tau\)</span> and the ones on the right by <span class="math inline">\(\tau\)</span>, which are both nonnegative scalars, since <span class="math inline">\(\tau\in[0,1]\)</span>. Here’s a compact expression for that: <span class="math display">\[\begin{align*}|\tau-\delta_{X&lt;\theta}|=\begin{cases}
+|\tau-1|=1-\tau &amp; \text{if }X&lt;\theta\\
+\tau &amp; \text{if }X\geq\theta
+\end{cases}\end{align*}\]</span> Therefore, we just need to multiply the <span class="math inline">\(|X-\theta|\)</span> in the loss <span class="math inline">\(\ref{eq:median_loss}\)</span> by <span class="math inline">\(|\tau-\delta_{X&lt;\theta}|\)</span>: <span class="math display">\[\begin{align*}
+L_{\theta} &amp; =\mathbb{E}_{X}[|X-\theta||\tau-\delta_{X&lt;\theta}|]\\
+ &amp; =\mathbb{E}_{X}[\rho_{\tau}(X-\theta)]
+\end{align*}\]</span> where <span class="math display">\[\begin{align}
+\rho_{\tau}(u) &amp; =|u||\tau-\delta_{u&lt;0}|\label{eq:rho_t_abs}\\
+ &amp; =u(\tau-\delta_{u&lt;0})\label{eq:rho_t_no_abs}
+\end{align}\]</span> Note that we can eliminate the two absolute values because the two factors have always the same sign. Expression <span class="math inline">\(\ref{eq:rho_t_no_abs}\)</span> is the one we find in equation (8) in <span class="citation" data-cites="2017arXiv171010044D">(Dabney et al. <a href="#ref-2017arXiv171010044D">2017</a>)</span>, but expression <span class="math inline">\(\ref{eq:rho_t_abs}\)</span> makes it clearer that we can eliminate the <em>cuspid</em> in <span class="math inline">\(\rho_{t}\)</span> by replacing <span class="math inline">\(|u|\)</span> with the <em>Huber loss</em> defined as: <span class="math display">\[\begin{align*}\mathcal{L}_{\kappa}(u)=\begin{cases}
+\frac{1}{2}u^{2} &amp; \text{if }|u|\leq\kappa\\
+\kappa(|u|-\frac{1}{2}\kappa) &amp; \text{otherwise }
+\end{cases}\end{align*}\]</span> This makes optimization easier, according to the authors of <span class="citation" data-cites="2017arXiv171010044D">(Dabney et al. <a href="#ref-2017arXiv171010044D">2017</a>)</span>. We’re interested in <span class="math inline">\(\mathcal{L}_{1}\)</span> in particular because it’s the only one with the right slopes in the <em>linear parts</em>. Here’s a picture of the two curves:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/rho_05.svg" alt="Figure 6." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 6.</em></figcaption>
+</figure>
+<p>Now we can define <span class="math inline">\(\rho_{\kappa}\)</span> as follows: <span class="math display">\[\begin{align*}
+\rho_{\tau}^{0}(u) &amp; =\rho_{\tau}(u)=u(\tau-\delta_{u&lt;0})\\
+\rho_{\tau}^{\kappa}(u) &amp; =\mathcal{L}_{\kappa}(u)|\tau-\delta_{u&lt;0}|
+\end{align*}\]</span></p>
+<p>Here’s a picture of <span class="math inline">\(\rho_{0.3}\)</span> and <span class="math inline">\(\rho_{0.3}^{1}\)</span>:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/rho_03.svg" alt="Figure 7." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 7.</em></figcaption>
+</figure>
+<p>The final loss becomes <span class="math display">\[\begin{align*}L_{\theta}=\mathbb{E}_{X}[\rho_{\tau}^{1}(X-\theta)]\end{align*}\]</span></p>
+<h3 id="computing-all-the-needed-quantiles-at-once"><span class="header-section-number">4.2.3</span> Computing all the needed quantiles at once</h3>
+<p>To compute more quantiles at once, we can just compute the total loss given by <span class="math display">\[\begin{align*}L_{\theta}=\sum_{i=1}^{N}\mathbb{E}_{X}[\rho_{\tau_{i}}^{1}(X-\theta_{i})]\end{align*}\]</span> where <span class="math inline">\(\theta=(\theta_{1},\ldots,\theta_{N})\)</span> and we want <span class="math inline">\(\theta_{i}\)</span> to be the <span class="math inline">\(\tau_{i}\)</span> quantile. Of course, in general we can write <span class="math display">\[\begin{align}L_{\theta}=\sum_{i=1}^{N}\mathbb{E}_{X}[\rho_{\tau_{i}}^{1}(X-f(\theta)_{i}]\label{eq:q_reg_formula}\end{align}\]</span> where <span class="math inline">\(f\)</span> is some <span class="math inline">\(\mathbb{R}^{N}\)</span>-valued function of <span class="math inline">\(\theta\)</span>.</p>
+<h3 id="subsec:Some-code"><span class="header-section-number">4.2.4</span> Some code</h3>
+<p>Here’s the code for drawing picture <a href="#fig:sliced_up_distrib">4</a> in subsection <a href="#subsec:A-different-idea">4.1</a>:</p>
+{% highlight python %}
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+class Quantiles:
+    def __init__(self, taus, tf_graph=None):
+        self.taus = taus
+        N = len(taus)
+
+        graph = tf_graph or tf.get_default_graph()
+        with graph.as_default():
+            with tf.variable_scope('quantiles'):
+                self.xs = tf.placeholder('float')
+                self.theta = tf.get_variable('theta', shape=(N,))
+                self.loss = sum(
+                    tf.reduce_mean(self._rho_tau(self.xs - self.theta[i],
+                                                 taus[i], kappa=0))
+                    for i in range(N))
+                self.train_step = tf.train.AdamOptimizer(0.05).minimize(
+                    self.loss)
+
+    @staticmethod
+    def _HL(u, kappa):
+        delta = tf.cast(abs(u) <= kappa, 'float')
+        return delta * (u * u / 2) + (1 - delta) * (
+                kappa * (abs(u) - kappa / 2))
+
+    @staticmethod
+    def _rho_tau(u, tau, kappa=1):
+        delta = tf.cast(u < 0, 'float')
+        if kappa == 0:
+            return (tau - delta) * u
+        else:
+            return abs(tau - delta) * Quantiles._HL(u, kappa)
+
+    def get_quantiles(self, samples, loops):
+        with tf.Session() as sess:
+            tf.global_variables_initializer().run()
+            for _ in range(loops):
+                loss, _ = sess.run([self.loss, self.train_step],
+                                   {self.xs: samples})
+            qs = sess.run(self.theta)
+        return qs
+
+
+class MixtureOfGaussians:
+    def __init__(self, pis, mus, sigmas):
+        self.pis = pis
+        self.mus = mus
+        self.sigmas = sigmas
+
+    def draw_samples(self, n):
+        samples = np.empty(n)
+        for i in range(n):
+            idx = np.random.multinomial(1, self.pis).argmax()
+            samples[i] = np.random.normal(self.mus[idx], self.sigmas[idx])
+        return samples
+
+    def pdf(self, x):
+        return np.sum(pi * np.exp(-0.5 * ((x - mu) / s) ** 2) /
+                        (s * np.sqrt(2 * pi))
+                      for pi, mu, s in zip(self.pis, self.mus, self.sigmas))
+
+
+tf.reset_default_graph()
+
+MoG = MixtureOfGaussians(pis=[1/3, 1/3, 1/3], mus=[-3, 0, 5], sigmas=[2, 1, 2])
+xs = np.linspace(-11, 11, num=200)
+ys = MoG.pdf(xs)
+
+N = 10  # num of quantiles
+taus = [i / (2 * N) for i in range(0, 2 * N + 1)]
+Q = Quantiles(taus)
+samples = MoG.draw_samples(10000)
+qs = Q.get_quantiles(samples, loops=2000)
+
+plt.plot(xs, ys)
+
+for q in qs[::2]:
+    plt.plot([q, q], [0, MoG.pdf(q)], 'black')
+plt.plot(qs[1::2], np.zeros_like(qs[1::2]), 'or')
+
+plt.savefig('quantiles.svg', bbox_inches='tight')
+plt.show()
+{% endhighlight %}
+<h2 id="definition-of-the-wasserstein-metric"><span class="header-section-number">4.3</span> Definition of the Wasserstein metric</h2>
+<p>Let <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> be two <em>scalar</em> random variables and <span class="math inline">\(F_{X}\)</span> and <span class="math inline">\(F_{Y}\)</span> their <em>CDFs</em>. Then, their <em><span class="math inline">\(p\)</span>-Wasserstein distance</em> is <span class="math display">\[\begin{align*}\mathcal{W}_{p}(X,Y)=\left(\int_{0}^{1}\left|F_{X}^{-1}(u)-F_{Y}^{-1}(u)\right|^{p}du\right)^{1/p}\end{align*}\]</span> We’ll use the <span class="math inline">\(1\)</span>-Wasserstein distance (i.e. with <span class="math inline">\(p=1\)</span>) which measures the difference between the CDFs by measuring the area of a “discrepancy region” (the <span style="color: cyan">cyan</span> region in the picture):</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/wasserstein.svg" alt="Figure 8." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 8.</em></figcaption>
+</figure>
+<p>Now note that the CDF of a distribution represented by atoms <span class="math inline">\(y_{1},\ldots,y_{N}\)</span> of probability mass <span class="math inline">\(q\)</span> is a step function:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/wasserstein_step.svg" alt="Figure 9." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 9.</em></figcaption>
+</figure>
+<p>The <span style="color: cyan">cyan </span>region, and thus the Wasserstein distance, is reduced when we slice up the <span style="color: red">red</span> curve into <span class="math inline">\(q\)</span>-mass slices and choose our atoms so that they halves the mass of each slice:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/wasserstein_optim.svg" alt="Figure 10." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 10.</em></figcaption>
+</figure>
+<p>Note that in the picture above <span class="math display">\[\begin{align*}\hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N\end{align*}\]</span> with <span class="math inline">\(N=12\)</span>. The positions of our atoms are <span class="math display">\[\begin{align*}y_{i}=F_{X}^{-1}(\hat{\tau}_{i}),\qquad i=1,\ldots,N\end{align*}\]</span> where <span class="math inline">\(X\)</span> is the variable associated with the <span style="color: red">red</span> CDF.</p>
+<p>Here’s what we get with <span class="math inline">\(30\)</span> atoms:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/wasserstein_optim_30.svg" alt="Figure 11." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 11.</em></figcaption>
+</figure>
+<p>So, it seems to be working!</p>
+<h2 id="subsec:The-full-algorithm"><span class="header-section-number">4.4</span> The full algorithm</h2>
+<p>Here’s the full algorithm taken directly (cut &amp; pasted) from <span class="citation" data-cites="2017arXiv171010044D">(Dabney et al. <a href="#ref-2017arXiv171010044D">2017</a>)</span>:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/W_algo.png" alt="Figure 12." class="86345huihsdfguhsjlkertvxgkh3498asdg:15.0%" style="width:100.0%" /><figcaption><em>Figure 12.</em></figcaption>
+</figure>
+<p>As before, let’s assume we’ve just picked <span class="math inline">\((x,a,r,x&#39;)\)</span> from the <em>replay buffer</em> in some variant of the DQN algorithm, so <span class="math inline">\(x\)</span> is used to indicate <em>states</em>. The algorithm is quite simple:</p>
+<ol>
+<li><p>We recover <span class="math inline">\(Q(x&#39;)\)</span> from <span class="math inline">\(Z(x&#39;)\)</span> returned by our net. We can assume that <span class="math inline">\(q_{j}=\frac{1}{N}\)</span>, i.e. the atoms have the same weight.</p></li>
+<li><p>We find <span class="math inline">\(a^{*}\)</span> which is the optimal action according to <span class="math inline">\(Q(x&#39;\)</span>) (there’s a typo in the code).</p></li>
+<li><p>Remember that the network, given a state (<span class="math inline">\(x&#39;\)</span> in this case), returns a <em>matrix</em> where each row contains the <span class="math inline">\(N\)</span> atoms for a particular action. Let <span class="math inline">\(\theta&#39;_{1},\ldots,\theta&#39;_{N}\)</span> be the atoms of <span class="math inline">\(Z(x&#39;,a^{*})\)</span>.</p></li>
+<li><p>We treat the atoms <span class="math inline">\(\theta&#39;_{1},\ldots,\theta&#39;_{N}\)</span> as samples and transform them directly: <span class="math display">\[\begin{align*}\mathcal{T}\theta&#39;_{j}=r+\gamma\theta&#39;_{j},\qquad i=1,\ldots,N\end{align*}\]</span></p></li>
+<li><p>Let <span class="math inline">\(\theta_{1},\ldots,\theta_{N}\)</span> be the atoms of <span class="math inline">\(Z(x,a)\)</span>. We want to reduce the Wasserstein distance between <span class="math inline">\(Z(x,a)\)</span> and <span class="math inline">\(r+\gamma Z(x&#39;,a^{*})\)</span> by optimizing <span class="math inline">\(Z(x,a)\)</span>. As always, the target <span class="math inline">\(r+\gamma Z(x&#39;,a^{*})\)</span> is treated as a constant for stability reasons (and we even use <em>target freezing</em> for extra stability).<br />
+We have <span class="math inline">\(N\)</span> samples for the target distribution, that is <span class="math inline">\(\mathcal{T}\theta&#39;_{1},\ldots,\mathcal{T}\theta&#39;_{j}\)</span>. So, we can use formula <span class="math inline">\(\ref{eq:q_reg_formula}\)</span>: <span class="math display">\[\begin{align*}L_{\theta}=\sum_{i=1}^{N}\mathbb{E}_{X}\left[\rho_{\tau_{i}}^{1}(X-f(\theta)_{i})\right]\end{align*}\]</span> In our case, the formula becomes <span class="math display">\[\begin{align*}
+L_{\theta} &amp; =\sum_{i=1}^{N}\mathbb{E}_{X}\left[\rho_{\tau_{i}}^{1}(X-f(\theta)_{i})\right]\\
+ &amp; =\sum_{i=1}^{N}\mathbb{E}_{\mathcal{T}Z&#39;}\left[\rho_{\hat{\tau}_{i}}^{1}(\mathcal{T}Z&#39;-\theta_{i})\right],\qquad\mathcal{T}Z&#39;=r+\gamma Z(x&#39;,a^{*})\\
+ &amp; =\frac{1}{N}\sum_{i=1}^{N}\sum_{j=1}^{N}\left[\rho_{\hat{\tau}_{i}}^{1}(\mathcal{T}\theta&#39;_{j}-\theta_{i})\right]
+\end{align*}\]</span> where <span class="math display">\[\begin{align*}\hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N\end{align*}\]</span></p></li>
+</ol>
+<h2 id="why-dont-we-use-simple-regression"><span class="header-section-number">4.5</span> Why don’t we use simple regression?</h2>
+<p>Both the <em>“moving” distribution</em> and the <em>target distribution</em> are represented by <span class="math inline">\(N\)</span> atoms each of weight <span class="math inline">\(1/N\)</span>:</p>
+<figure>
+<img src="/assets/2017-12-08-distributional_rl/wasserstein_both.svg" alt="Figure 13." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 13.</em></figcaption>
+</figure>
+<p>So why don’t we avoid sampling and use simple regression? That is: <span class="math display">\[\begin{align}L_{\theta}=\sum_{i=1}^{N}(\theta_{i}-\theta&#39;_{i})^{2}\label{eq:simple_reg_loss}\end{align}\]</span> The problem is that the atom positions <span class="math inline">\(\theta_{1},\ldots,\theta_{N}\)</span> and <span class="math inline">\(\theta&#39;_{1},\ldots,\theta&#39;_{N}\)</span> returned by the network are not guaranteed to be in any particular order, especially before convergence.</p>
+<p>Note that the method described in subsection <a href="#subsec:The-full-algorithm">4.4</a> doesn’t require that the atom positions be ordered from smaller to bigger. First, the <em>target</em> positions needn’t be sorted because they’re just used as <em>samples</em>. Second, the <em>moving</em> positions (i.e. the ones we want to update) can also be in any order because they’re trained “independently”: each atom will be moved towards the right position indicated by its corresponding <span class="math inline">\(\hat{\tau}_{i}\)</span> irrespective of the positions and order of the other “moving” atoms.</p>
+<p>I don’t know if this is a problem in the RL setting, but when I wrote the code to draw picture <a href="#fig:sliced_up_distrib">4</a> (shown in subsection <a href="#subsec:Some-code">4.2.4</a>), I noticed that <em>quantile regression</em> requires many samples and quite a lot of training to get good results. In particular, since we’re using samples, the quality is especially low in intervals of low probability mass.</p>
+<p>Moreover, note that, in the code, I used <span class="math inline">\(\rho_{\tau}^{0}\)</span>, the curve with the cuspid, and not <span class="math inline">\(\rho_{\tau}^{1}\)</span>, the smoothed out one, because I was getting worse results with the latter. Indeed, by replacing the “cuspid part” with a quadratic, we treat the samples which fall in the quadratic part as if we were computing the <em>mean</em> rather than the <em>median</em>.</p>
+<p>One possible solution might be to return nonnegative distances between the points and then reconstruct the absolute positions of the atoms, which is very easy to do. This way we could use loss <span class="math inline">\(\ref{eq:simple_reg_loss}\)</span> which is much more efficient.</p>
+
+<h1 id="bibliography" class="unnumbered">Bibliography</h1>
+<div id="refs" class="references">
+<div id="ref-DBLP:journals/corr/BellemareDM17">
+<p>Bellemare, Marc G., Will Dabney, and Rémi Munos. 2017. “A Distributional Perspective on Reinforcement Learning.” <em>CoRR</em> abs/1707.06887. <a href="http://arxiv.org/abs/1707.06887" class="uri">http://arxiv.org/abs/1707.06887</a>.</p>
+</div>
+<div id="ref-2017arXiv171010044D">
+<p>Dabney, W., M. Rowland, M. G. Bellemare, and R. Munos. 2017. “Distributional Reinforcement Learning with Quantile Regression.” <em>ArXiv E-Prints</em>, October.</p>
+</div>
+<div id="ref-mnih2015human">
+<p>Mnih, Volodymyr, Koray Kavukcuoglu, David Silver, Andrei A Rusu, Joel Veness, Marc G Bellemare, Alex Graves, et al. 2015. “Human-Level Control Through Deep Reinforcement Learning.” <em>Nature</em> 518 (7540). Nature Research:529–33.</p>
+</div>
+</div>

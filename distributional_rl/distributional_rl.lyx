@@ -1,0 +1,3317 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+%\usepackage[utf8]{inputenc}
+\usepackage{verbatim}
+\end_preamble
+\use_default_options true
+\begin_modules
+theorems-ams
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman "lmodern" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type numerical
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{comment}
+\end_layout
+
+\begin_layout Plain Layout
+
+---
+\end_layout
+
+\begin_layout Plain Layout
+
+html_file_name:        distributional_rl         # required
+\end_layout
+
+\begin_layout Plain Layout
+
+args:
+\end_layout
+
+\begin_layout Plain Layout
+
+    blog_base_dir:     D:
+\backslash
+--- New Projects
+\backslash
+mtomassoli.github.io
+\end_layout
+
+\begin_layout Plain Layout
+
+    assets_rel_dir:    assets
+\end_layout
+
+\begin_layout Plain Layout
+
+style: >
+\end_layout
+
+\begin_layout Plain Layout
+
+          article { text-align: justify; }
+\end_layout
+
+\begin_layout Plain Layout
+
+          article p { hyphens: auto; }
+\end_layout
+
+\begin_layout Plain Layout
+
+          figure { margin-top: 1em; margin-bottom: 1em; }
+\end_layout
+
+\begin_layout Plain Layout
+
+          figure figcaption { text-align: justify; text-align-last: center;
+ margin: 0 5%; }
+\end_layout
+
+\begin_layout Plain Layout
+
+---
+\end_layout
+
+\begin_layout Plain Layout
+
+layout:         post
+\end_layout
+
+\begin_layout Plain Layout
+
+title:          Distributional RL
+\end_layout
+
+\begin_layout Plain Layout
+
+date:           2017-12-08
+\end_layout
+
+\begin_layout Plain Layout
+
+summary:        An intuitive explanation of Distributional RL.
+\end_layout
+
+\begin_layout Plain Layout
+
+---
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{comment}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Q-learning
+\end_layout
+
+\begin_layout Standard
+In Reinforcement Learning we are interested in maximizing the 
+\emph on
+Expected Return
+\emph default
+ so we usually work directly with those expectations.
+ For instance, in 
+\emph on
+Q-learning 
+\emph default
+with 
+\emph on
+function approximation
+\emph default
+ we want to minimize the error
+\begin_inset Formula 
+\begin{align}
+\mathbb{E}_{s,a}\left[\left(r(s,a)+\gamma\mathbb{E}_{s'}\left[\max_{a'}Q(s',a')\right]-Q(s,a)\right)^{2}\right] & =\nonumber \\
+\mathbb{E}_{s,a,s'}\left[\left(r(s,a)+\gamma\max_{a'}Q(s',a')-Q(s,a)\right)^{2}\right]\label{eq:classic_td_error}
+\end{align}
+
+\end_inset
+
+by moving 
+\begin_inset Formula $Q(s,a)$
+\end_inset
+
+ towards the 
+\emph on
+target
+\emph default
+ 
+\begin_inset Formula $r(s,a)+\gamma\max_{a'}Q(s',a')$
+\end_inset
+
+, where 
+\begin_inset Formula $r(s,a)$
+\end_inset
+
+ is the 
+\emph on
+expected immediate reward
+\emph default
+.
+ In 
+\emph on
+semi-gradient 
+\emph default
+methods we pretend that the target is constant and in 
+\emph on
+DQN
+\begin_inset CommandInset citation
+LatexCommand citep
+key "mnih2015human"
+
+\end_inset
+
+
+\emph default
+ we even 
+\emph on
+freeze 
+\emph default
+the 
+\begin_inset Quotes eld
+\end_inset
+
+target network
+\begin_inset Quotes erd
+\end_inset
+
+ to improve stability even further.
+\end_layout
+
+\begin_layout Standard
+The main idea of 
+\emph on
+Distributional RL
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+ 
+\emph default
+is to work directly with the 
+\emph on
+full distribution
+\emph default
+ of the return rather than with its expectation.
+ Let the random variable 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+ be the return obtained by starting from state 
+\begin_inset Formula $s$
+\end_inset
+
+, performing action 
+\begin_inset Formula $a$
+\end_inset
+
+ and then following the current policy.
+ Then
+\begin_inset Formula 
+\[
+Q(s,a)=\mathbb{E}[Z(s,a)].
+\]
+
+\end_inset
+
+Instead of trying to minimize the error
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:classic_td_error"
+
+\end_inset
+
+, which is basically a distance between expectations, we can instead try
+ to minimize a 
+\emph on
+distributional 
+\emph default
+error, which is a distance between full distributions:
+\begin_inset Formula 
+\begin{align}
+\sup_{s,a}\mathrm{dist}\left(R(s,a)+\gamma Z(s',a^{*}),Z(s,a)\right)\label{eq:distrib_td_error}\\
+s'\sim p(\cdot|s,a)\nonumber 
+\end{align}
+
+\end_inset
+
+where you can mentally replace 
+\begin_inset Formula $\sup$
+\end_inset
+
+ with 
+\begin_inset Formula $\max$
+\end_inset
+
+, 
+\begin_inset Formula $R(s,a)$
+\end_inset
+
+ is the random variable for the immediate reward, and
+\begin_inset Formula 
+\[
+a^{*}=\underset{a'}{\mathrm{arg\,max}\,}Q(s',a')=\underset{a'}{\mathrm{arg\,max}\,}\mathbb{E}[Z(s',a')].
+\]
+
+\end_inset
+
+Note that we're still using 
+\begin_inset Formula $Q(s,a)$
+\end_inset
+
+, i.e.
+ the expected return, to decide which action to pick, but we're trying to
+ optimize 
+\emph on
+distributions
+\emph default
+ rather than 
+\emph on
+expectations
+\emph default
+ (of those distributions).
+\end_layout
+
+\begin_layout Standard
+There's a subtlety in expression
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:distrib_td_error"
+
+\end_inset
+
+: if 
+\begin_inset Formula $s,a$
+\end_inset
+
+ are constant, 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+ is a random variable, but even more so when 
+\begin_inset Formula $s$
+\end_inset
+
+ or 
+\begin_inset Formula $a$
+\end_inset
+
+ are themselves random variables!
+\end_layout
+
+\begin_layout Section
+Policy Evaluation
+\end_layout
+
+\begin_layout Standard
+Let's consider 
+\emph on
+policy evaluation
+\emph default
+ for a moment.
+ In this case we want to minimize
+\begin_inset Formula 
+\[
+\mathbb{E}_{s,a,s',a'}\left[\left(r(s,a)+\gamma Q(s',a')-Q(s,a)\right)^{2}\right]
+\]
+
+\end_inset
+
+We can define the 
+\emph on
+Bellman operator
+\emph default
+ 
+\emph on
+for evaluation
+\emph default
+ as follows:
+\begin_inset Formula 
+\[
+(\mathcal{T}^{\pi}Q)(s,a)=\mathbb{E}_{s'\sim p(\cdot|s,a),a'\sim\pi(\cdot|s')}[r(s,a)+\gamma Q(s',a')]
+\]
+
+\end_inset
+
+The Bellman operator 
+\begin_inset Formula $\mathcal{T}^{\pi}$
+\end_inset
+
+ is a 
+\begin_inset Formula $\gamma$
+\end_inset
+
+
+\emph on
+-contraction
+\emph default
+, meaning that
+\begin_inset Formula 
+\[
+\mathrm{dist}\left(\mathcal{T}Q_{1},\mathcal{T}Q_{2}\right)\leq\gamma\mathrm{dist}\left(Q_{1},Q_{2}\right),
+\]
+
+\end_inset
+
+so, since 
+\begin_inset Formula $Q^{\pi}$
+\end_inset
+
+ is a 
+\emph on
+unique 
+\emph default
+fixed point (i.e.
+ 
+\begin_inset Formula $\mathcal{T}Q=Q\iff Q=Q^{\pi}$
+\end_inset
+
+), we must have that 
+\begin_inset Formula $\mathcal{T}^{\infty}Q=Q^{\pi}$
+\end_inset
+
+, disregarding approximation errors.
+\end_layout
+
+\begin_layout Standard
+It turns out 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+ that this result can be ported to the distributional setting.
+ Let's define the 
+\emph on
+Bellman distribution operator for evaluation
+\emph default
+ in an analogous way:
+\begin_inset Formula 
+\begin{align*}
+(\mathcal{T}_{D}^{\pi}Z)(s,a) & =R(s,a)+\gamma Z(s',a')\\
+s' & \sim p(\cdot|s,a)\\
+a' & \sim\pi(\cdot|s')
+\end{align*}
+
+\end_inset
+
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\mathcal{T}_{D}^{\pi}$
+\end_inset
+
+ is a 
+\family default
+\series default
+\shape default
+\size default
+\emph on
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+
+\begin_inset Formula $\gamma$
+\end_inset
+
+-contraction
+\emph default
+ in the 
+\emph on
+Wasserstein distance 
+\begin_inset Formula $\mathcal{W}$
+\end_inset
+
+, i.e.
+\begin_inset Formula 
+\[
+\sup_{s,a}\mathcal{W}\left(\mathcal{T}_{D}^{\pi}Z_{1}(s,a),\mathcal{T}_{D}^{\pi}Z_{2}(s,a)\right)\leq\gamma\sup_{s,a}\mathcal{W}(Z_{1}(s,a),Z_{2}(s,a))
+\]
+
+\end_inset
+
+
+\emph default
+This isn't true for the 
+\emph on
+KL divergence
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+Unfortunately, this result doesn't hold for the 
+\emph on
+control
+\emph default
+ (the one with the 
+\begin_inset Formula $\max$
+\end_inset
+
+) version of the distributional operator.
+\end_layout
+
+\begin_layout Section
+KL divergence
+\end_layout
+
+\begin_layout Subsection
+Definition
+\end_layout
+
+\begin_layout Standard
+I warn you that this subsection is 
+\emph on
+highly informal.
+\end_layout
+
+\begin_layout Standard
+If 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+ are two distributions with same 
+\emph on
+support
+\emph default
+ (i.e.
+ their 
+\emph on
+pdfs
+\emph default
+ are non-zero at the same points), then their KL divergence is defined as
+ follows:
+\begin_inset Formula 
+\[
+\mathrm{KL}(p\|q)=\int p(x)\log\frac{p(x)}{q(x)}dx.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let's consider the 
+\emph on
+discrete
+\emph default
+ case:
+\begin_inset Formula 
+\[
+\mathrm{KL}(p\|q)=\sum_{i=1}^{N}p(x_{i})\log\frac{p(x_{i})}{q(x_{i})}=\sum_{i=1}^{N}p(x_{i})[\log p(x_{i})-\log q(x_{i})].
+\]
+
+\end_inset
+
+As we can see, we're basically comparing the 
+\emph on
+scores
+\emph default
+ at the points 
+\begin_inset Formula $x_{1},\ldots,x_{N}$
+\end_inset
+
+, weighting each comparison according to 
+\begin_inset Formula $p(x_{i})$
+\end_inset
+
+.
+ Note that the KL doesn't make use of the values 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ directly: only their probabilities are used! Moreover, if 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+ have different supports, the KL is undefined.
+\end_layout
+
+\begin_layout Subsection
+How to use it
+\end_layout
+
+\begin_layout Standard
+Now say we're using DQN and extract 
+\begin_inset Formula $(s,a,r,s')$
+\end_inset
+
+ from the 
+\emph on
+replay buffer
+\emph default
+.
+ A 
+\emph on
+sample 
+\emph default
+of the target distribution is 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+, where 
+\begin_inset Formula $a^{*}=\mathrm{arg\,max}_{a'}Q(s',a')$
+\end_inset
+
+.
+ We want to move 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+ towards this target (by keeping the target fixed).
+\end_layout
+
+\begin_layout Standard
+I called 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+ a 
+\emph on
+sample
+\emph default
+ of a distribution, which might sound like a contradiction in terms, but
+ it isn't.
+ This is just a sample because 
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\begin_inset Formula $s'$
+\end_inset
+
+ are not random variables, but just samples.
+ We still get a distribution though since 
+\begin_inset Formula $Z(s',a^{*})$
+\end_inset
+
+ is a distribution.
+ Indeed, to get a 
+\emph on
+single
+\emph default
+ sample 
+\series bold
+\emph on
+from
+\series default
+\emph default
+ the 
+\emph on
+real
+\emph default
+ distribution, we should first sample 
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\begin_inset Formula $s'$
+\end_inset
+
+, and, finally, sample from the distribution 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+.
+ Note that this is almost exactly what we're doing since 
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $s'$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ extracted from the replay buffer were indeed sampled.
+ The only difference is that instead of sampling from 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+, we use the full distribution (but based, again, on just samples of 
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\begin_inset Formula $s'$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Let's say we have a net which models 
+\begin_inset Formula $Z$
+\end_inset
+
+ by taking a state 
+\begin_inset Formula $s$
+\end_inset
+
+ and returning a distribution 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+ for each action.
+ For instance, we can represent each distribution through a 
+\emph on
+softmax
+\emph default
+ like we often do in 
+\emph on
+Deep Learning
+\emph default
+ for 
+\emph on
+classification tasks
+\emph default
+.
+ In particular, let's choose some fixed values 
+\begin_inset Formula $x_{1},\ldots,x_{N}$
+\end_inset
+
+ for the support of all the distributions returned by the net.
+ To simplify things, let's make them 
+\emph on
+equidistant
+\emph default
+ so that
+\begin_inset Formula 
+\[
+x_{i+1}-x_{i}=d=(x_{N}-x_{1})/(N-1),\qquad i=1,\ldots,N-1
+\]
+
+\end_inset
+
+The pmf looks like a comb:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename discrete.svg
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Since the values 
+\begin_inset Formula $x_{1},\ldots,x_{N}$
+\end_inset
+
+ are fixed, we just have to return 
+\begin_inset Formula $N$
+\end_inset
+
+ probabilities for each 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+, so the net takes a single state and returns 
+\begin_inset Formula $|\mathcal{A}|N$
+\end_inset
+
+ scalars, where 
+\begin_inset Formula $|\mathcal{A}|$
+\end_inset
+
+ is the number of possible actions.
+\end_layout
+
+\begin_layout Standard
+If 
+\begin_inset Formula $p_{1},\ldots,p_{N}$
+\end_inset
+
+ and 
+\begin_inset Formula $q_{1},\ldots,q_{N}$
+\end_inset
+
+ are the probabilities of the two distributions 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+, then their KL is simply
+\begin_inset Formula 
+\[
+\mathrm{KL}(p\|q)=\sum_{i=1}^{N}p_{i}\log\frac{p_{i}}{q_{i}}=H(p,q)-H(p)
+\]
+
+\end_inset
+
+and if you're optimizing wrt 
+\begin_inset Formula $q$
+\end_inset
+
+ (i.e.
+ you're moving 
+\begin_inset Formula $q$
+\end_inset
+
+ towards 
+\begin_inset Formula $p$
+\end_inset
+
+), then you can drop the 
+\emph on
+entropy 
+\emph default
+term.
+\end_layout
+
+\begin_layout Standard
+Also, we can recover 
+\begin_inset Formula $Q(s,a)$
+\end_inset
+
+ very easily:
+\begin_inset Formula 
+\[
+Q(s,a)=\mathbb{E}[Z(s,a)]=\sum_{i=1}^{N}p_{i}x_{i}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The interesting part is the 
+\emph on
+transformation
+\emph default
+.
+ In distributional Q-learning we want to move 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+ towards 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+, but how do we put 
+\begin_inset Formula $p$
+\end_inset
+
+ in 
+\begin_inset Quotes eld
+\end_inset
+
+standard comb form
+\begin_inset Quotes erd
+\end_inset
+
+? This is the 
+\emph on
+projection part
+\emph default
+ described in 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+ and it's very easy.
+ To form the target distribution we start from 
+\begin_inset Formula $p=Z(s',a^{*})$
+\end_inset
+
+, which is already in the standard form 
+\begin_inset Formula $p_{1},\ldots,p_{N}$
+\end_inset
+
+ and we look at the pairs 
+\begin_inset Formula $(x_{1},p_{1}),\ldots,(x_{N},p_{N})$
+\end_inset
+
+ as if they represented 
+\emph on
+samples 
+\emph default
+with 
+\emph on
+weights
+\emph default
+, which the authors of 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+ call 
+\emph on
+atoms
+\emph default
+.
+ This means that we can transform the distribution 
+\begin_inset Formula $p$
+\end_inset
+
+ just by transforming the position of its 
+\emph on
+atoms
+\emph default
+.
+ The transformed atoms corresponding to 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+ are
+\begin_inset Formula 
+\[
+(r+\gamma x_{1},p_{1}),(r+\gamma x_{2},p_{2}),\ldots,(r+\gamma x_{N},p_{N}).
+\]
+
+\end_inset
+
+Note that the weights 
+\begin_inset Formula $p_{i}$
+\end_inset
+
+ don't change.
+ The problem is that now we have atoms which aren't in the standard positions
+ 
+\begin_inset Formula $x_{1},\ldots,x_{N}$
+\end_inset
+
+.
+ The solution proposed in
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+ is to 
+\emph on
+split
+\emph default
+ each 
+\emph on
+misaligned
+\emph default
+ atom into the two closest 
+\emph on
+aligned
+\emph default
+ atoms by making sure to distribute its weight according to its distance
+ from the two misaligned atoms:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename split.svg
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:atom_splitting"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Observe the proportions very carefully.
+ Let's say the 
+\color green
+green
+\color inherit
+ atom has weight 
+\begin_inset Formula $w.$
+\end_inset
+
+ For some constants 
+\begin_inset Formula $c$
+\end_inset
+
+, the 
+\color green
+green
+\color inherit
+ atom is at distance 
+\begin_inset Formula $3c$
+\end_inset
+
+ from 
+\begin_inset Formula $x_{6}$
+\end_inset
+
+ and 
+\begin_inset Formula $c$
+\end_inset
+
+ from 
+\begin_inset Formula $x_{7}$
+\end_inset
+
+.
+ Indeed, the atom at 
+\begin_inset Formula $x_{6}$
+\end_inset
+
+ receives weight 
+\begin_inset Formula $\frac{1}{4}w$
+\end_inset
+
+ and the atom at 
+\begin_inset Formula $x_{7}$
+\end_inset
+
+ weight 
+\begin_inset Formula $\frac{3}{4}w$
+\end_inset
+
+, which makes sense.
+ Also, note that the 
+\emph on
+probability mass
+\emph default
+ is conserved so there's no need to normalize after the splitting.
+ Of course, since we need to split all the transformed atoms, individual
+ aligned atoms can receive contributions from different atoms.
+ We simply sum all the contributions.
+ This is how the authors do it, but it's certainly not the only way.
+\end_layout
+
+\begin_layout Subsection
+The full algorithm
+\end_layout
+
+\begin_layout Standard
+Here's the algorithm taken directly (cut & pasted) from 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename KL_algo.png
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Assume we've just picked 
+\begin_inset Formula $(x_{t},a_{t},r_{t},x_{t+1})$
+\end_inset
+
+ from the 
+\emph on
+replay buffer
+\emph default
+ in some variant of the DQN algorithm, so 
+\begin_inset Formula $x$
+\end_inset
+
+ is used to indicate 
+\emph on
+states
+\emph default
+.
+ The 
+\begin_inset Formula $z_{0},\ldots,z_{N-1}$
+\end_inset
+
+ are the fixed global positions of the atoms (i.e.
+ our 
+\begin_inset Formula $x_{1},\ldots,x_{N}$
+\end_inset
+
+ in figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:atom_splitting"
+
+\end_inset
+
+).
+ Let's assume there's just a global 
+\begin_inset Formula $\gamma$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Let's go through the algorithm in detail assuming we're using a neural network
+ for 
+\begin_inset Formula $Z$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Enumerate
+We fead 
+\begin_inset Formula $x_{t+1}$
+\end_inset
+
+ to our net which outputs an 
+\begin_inset Formula $|\mathcal{A}|\times N$
+\end_inset
+
+ matrix 
+\begin_inset Formula $M(x_{t+1})$
+\end_inset
+
+, i.e.
+ each row corresponds to a single action and contains the probabilities
+ for the 
+\begin_inset Formula $N$
+\end_inset
+
+ atoms.
+ That is, the row for action 
+\begin_inset Formula $a$
+\end_inset
+
+ contains the vector
+\begin_inset Formula 
+\[
+(p_{0}(x_{t+1},a),\ldots,p_{N-1}(x_{t+1},a))
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+We compute all the 
+\begin_inset Formula 
+\[
+Q(x_{t+1},a)=\mathbb{E}\left[Z(x_{t+1},a)\right]=\sum_{i=0}^{N-1}z_{i}p_{i}(x_{t+1},a)
+\]
+
+\end_inset
+
+as follows:
+\begin_inset Formula 
+\[
+Q(x_{t+1})=M(x_{t+1})\begin{bmatrix}z_{0}\\
+z_{1}\\
+\vdots\\
+z_{N-1}
+\end{bmatrix}.
+\]
+
+\end_inset
+
+Note that 
+\begin_inset Formula $Q(x_{t+1})$
+\end_inset
+
+ is a column vector of length 
+\begin_inset Formula $|\mathcal{A}|$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Now we can determine the optimum action
+\begin_inset Formula 
+\[
+a^{*}=\mathrm{arg\,max_{a}}Q(x_{t+1},a)
+\]
+
+\end_inset
+
+Let 
+\begin_inset Formula $q=(q_{0},\ldots,q_{N-1})$
+\end_inset
+
+ be the row of 
+\begin_inset Formula $M(x_{t+1})$
+\end_inset
+
+ corresponding to 
+\begin_inset Formula $a^{*}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $m_{0},\ldots,m_{N-1}$
+\end_inset
+
+ will accumulate the probabilities of the 
+\emph on
+aligned
+\emph default
+ atoms of the target distribution 
+\begin_inset Formula $r_{t}+\gamma Z(x_{t+1},a^{*})$
+\end_inset
+
+.
+ We start by zeroing them.
+\end_layout
+
+\begin_layout Enumerate
+The 
+\emph on
+non-aligned
+\emph default
+ atoms of the target distribution are at positions
+\begin_inset Formula 
+\[
+\hat{\mathcal{T}}z_{j}=r_{t}+\gamma z_{j},\qquad j=0,\ldots,N-1
+\]
+
+\end_inset
+
+ We clip those positions so that they are in 
+\begin_inset Formula $[V_{\mathrm{MIN}},V_{\mathrm{MAX}}]$
+\end_inset
+
+, i.e.
+ 
+\begin_inset Formula $[z_{0},z_{N-1}]$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Assuming that the adjacent aligned atoms are at distance 
+\begin_inset Formula $\Delta z$
+\end_inset
+
+, the indices of the closest 
+\emph on
+aligned
+\emph default
+ atoms on the left and on the right of 
+\begin_inset Formula $\hat{\mathcal{T}}z_{j}$
+\end_inset
+
+ are, respectively:
+\begin_inset Formula 
+\begin{align*}
+l & =\left\lfloor \frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right\rfloor \\
+u & =\left\lceil \frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right\rceil 
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Now we need to split the weight of 
+\begin_inset Formula $\hat{\mathcal{T}}z_{j}$
+\end_inset
+
+, which is 
+\begin_inset Formula $q_{j}$
+\end_inset
+
+, between 
+\begin_inset Formula $m_{l}$
+\end_inset
+
+ and 
+\begin_inset Formula $m_{r}$
+\end_inset
+
+ as we saw before.
+ Note that
+\begin_inset Formula 
+\begin{align*}
+(u)-(b_{j}) & =\left(\frac{z_{u}-z_{0}}{\Delta z}\right)-\left(\frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right)=\frac{z_{u}-\hat{\mathcal{T}}z_{j}}{z_{u}-z_{l}}\\
+(b_{j})-(l) & =\left(\frac{\hat{\mathcal{T}}z_{j}-z_{0}}{\Delta z}\right)-\left(\frac{z_{l}-z_{0}}{\Delta z}\right)=\frac{\hat{\mathcal{T}}z_{j}-z_{l}}{z_{u}-z_{l}}
+\end{align*}
+
+\end_inset
+
+which means that, as we said before, the weight 
+\begin_inset Formula $q_{j}$
+\end_inset
+
+ is split between 
+\begin_inset Formula $z_{l}$
+\end_inset
+
+ and 
+\begin_inset Formula $z_{u}$
+\end_inset
+
+ (indeed, 
+\begin_inset Formula $u-b_{j}+b_{j}-l=1)$
+\end_inset
+
+, and the contribution to 
+\begin_inset Formula $m_{l}$
+\end_inset
+
+ is proportional to the distance of 
+\begin_inset Formula $\hat{\mathcal{T}}z_{j}$
+\end_inset
+
+ from 
+\begin_inset Formula $z_{u}$
+\end_inset
+
+.
+ The more distant it is from 
+\begin_inset Formula $z_{u}$
+\end_inset
+
+, the higher the contribution to 
+\begin_inset Formula $m_{l}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Now we have the probabilities 
+\begin_inset Formula $m_{0},\ldots,m_{N-1}$
+\end_inset
+
+ of the 
+\emph on
+aligned
+\emph default
+ atoms of 
+\begin_inset Formula $r_{t}+\gamma Z(x_{t+1},a^{*})$
+\end_inset
+
+ and, of course, the probabilities
+\begin_inset Formula 
+\[
+p_{0}(x_{t},a_{t};\theta),\ldots,p_{N-1}(x_{t},a_{t};\theta)
+\]
+
+\end_inset
+
+of the 
+\emph on
+aligned
+\emph default
+ atoms of 
+\begin_inset Formula $Z(x_{t},a)$
+\end_inset
+
+, which are the ones we want to update.
+ Thus
+\begin_inset Formula 
+\begin{align*}
+\nabla_{\theta}\mathrm{KL}(m\|p_{\theta}) & =\nabla_{\theta}\sum_{i=0}^{N-1}m_{i}\log\frac{m_{i}}{p_{\theta}}\\
+ & =\nabla_{\theta}\left[H(m,p_{\theta})-H(m)\right]\\
+ & =\nabla_{\theta}H(m,p_{\theta})
+\end{align*}
+
+\end_inset
+
+That is, we can just use the 
+\emph on
+cross-entropy
+\emph default
+
+\begin_inset Formula 
+\[
+H(m,p_{\theta})=-\sum_{i=0}^{N-1}m_{i}\log p_{i}(x_{t},a_{t};\theta)
+\]
+
+\end_inset
+
+for the 
+\emph on
+loss
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Wasserstein distance
+\end_layout
+
+\begin_layout Standard
+The first paper 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "DBLP:journals/corr/BellemareDM17"
+
+\end_inset
+
+ about 
+\emph on
+distributional RL
+\emph default
+ left a 
+\emph on
+gap
+\emph default
+ between theory and practice because the theory requires the 
+\emph on
+Wasserstein distance
+\emph default
+, but in practice they used a KL-based procedure.
+\end_layout
+
+\begin_layout Standard
+The second paper 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "2017arXiv171010044D"
+
+\end_inset
+
+ closes the gap in a very elegant way.
+\end_layout
+
+\begin_layout Subsection
+A different idea
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:A-different-idea"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This time I won't start with a definition, but with an 
+\emph on
+idea
+\emph default
+.
+ Rather than use atoms with 
+\emph on
+fixed positions
+\emph default
+, but 
+\emph on
+variable weights
+\emph default
+, let's do the opposite: let's use atoms with 
+\emph on
+fixed weights
+\emph default
+, but 
+\emph on
+variable positions
+\emph default
+.
+ Moreover, let's use the same weight for each atom, i.e.
+ 
+\begin_inset Formula $1/N$
+\end_inset
+
+ if the atoms are 
+\begin_inset Formula $N$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+But how do we represent distributions this way? It's very simple, really.
+ We slice up the distribution we want to represent into 
+\begin_inset Formula $N$
+\end_inset
+
+ slices of 
+\begin_inset Formula $1/N$
+\end_inset
+
+ mass and put each atom at the 
+\emph on
+median
+\emph default
+ of a slice.
+ This makes sense; in fact, the atoms weigh 
+\begin_inset Formula $1/N$
+\end_inset
+
+ as well:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename quantiles.svg
+	width 90text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+The distribution has been sliced up into slices of equal 
+\emph on
+probability mass
+\emph default
+ and red points have been placed in the center of mass of each slice.
+ For the code, see subsection
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Some-code"
+
+\end_inset
+
+.
+ This image is produced through sampling as described in the following sections.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:sliced_up_distrib"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If the atoms are 
+\begin_inset Formula $N$
+\end_inset
+
+ then the 
+\begin_inset Formula $i$
+\end_inset
+
+-th atom corresponds to a quantile of
+\begin_inset Formula 
+\[
+\hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+How do we determine a quantile?
+\end_layout
+
+\begin_layout Subsubsection
+Determining the median
+\end_layout
+
+\begin_layout Standard
+The median is just the 
+\emph on
+
+\begin_inset Formula $0.5$
+\end_inset
+
+ quantile
+\emph default
+, i.e.
+ a point which has 
+\begin_inset Formula $0.5$
+\end_inset
+
+ mass on the left and 
+\begin_inset Formula $0.5$
+\end_inset
+
+ mass on the right.
+ In other words, it splits the probability mass in half.
+ So let's say we have a random variable 
+\begin_inset Formula $X$
+\end_inset
+
+ and we know how to draw samples.
+ How can we compute the median? We start with a guess 
+\begin_inset Formula $\theta$
+\end_inset
+
+, draw some samples and if 
+\begin_inset Formula $\theta$
+\end_inset
+
+ has more samples on the left than on the right, we move it a little to
+ the left.
+ By symmetry, we move it to the right if it has more samples on the right.
+ Then we repeat the process and keep updating 
+\begin_inset Formula $\theta$
+\end_inset
+
+ until convergence.
+\end_layout
+
+\begin_layout Standard
+We should move 
+\begin_inset Formula $\theta$
+\end_inset
+
+ in proportion to the disparity between the two sides, so let's decide that
+ each sample on the 
+\emph on
+left
+\emph default
+ subtract 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ and each sample on the 
+\emph on
+right
+\emph default
+ add 
+\begin_inset Formula $\alpha$
+\end_inset
+
+.
+ Basically, 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ is a 
+\emph on
+learning rate
+\emph default
+.
+ If it's too small the algorithm takes too long and if it's too big the
+ algorithm 
+\emph on
+fluctuates 
+\emph default
+a lot around the optimal solution.
+ Here's a picture about this method:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename median.svg
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We reach the equilibrium when 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the median.
+ Doesn't this look like 
+\emph on
+SGD
+\emph default
+ with a 
+\emph on
+minibatch
+\emph default
+ of 
+\begin_inset Formula $16$
+\end_inset
+
+ samples and learning rate 
+\begin_inset Formula $\alpha$
+\end_inset
+
+? What's the corresponding 
+\emph on
+loss
+\emph default
+? The loss is clearly
+\begin_inset Formula 
+\begin{equation}
+L_{\theta}=\mathbb{E}_{X}[|X-\theta|]\label{eq:median_loss}
+\end{equation}
+
+\end_inset
+
+This should look familiar to any statistician.
+ Note that in the picture above we're adding the gradients, but when we
+ 
+\emph on
+minimize
+\emph default
+ we subtract them so gradients on the left of 
+\begin_inset Formula $\theta$
+\end_inset
+
+ must be 
+\begin_inset Formula $1$
+\end_inset
+
+ and on the right 
+\begin_inset Formula $-1$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\nabla_{\theta}L_{\theta}=\begin{cases}
+\nabla_{\theta}(\theta-X)=1 & \text{if }X<\theta\\
+\nabla_{\theta}(X-\theta)=-1 & \text{if }X\geq\theta
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Determining any quantile
+\end_layout
+
+\begin_layout Standard
+We can generalize this to any quantile by using different 
+\emph on
+weights
+\emph default
+ for the left and right samples.
+ Let's omit the 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ for more clarity, since we know it's just the learning rate by now.
+ If we want the probability mass on the left of 
+\begin_inset Formula $\theta$
+\end_inset
+
+ to be 
+\begin_inset Formula $\tau$
+\end_inset
+
+, we need to use weight 
+\begin_inset Formula $1-\tau$
+\end_inset
+
+ for the samples on the left and 
+\begin_inset Formula $\tau$
+\end_inset
+
+ for the ones on the right.
+ This works because, when 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the 
+\begin_inset Formula $\tau$
+\end_inset
+
+ quantile, if we sample 
+\begin_inset Formula $S$
+\end_inset
+
+ samples then, 
+\emph on
+on average
+\emph default
+, the samples on the left will be 
+\begin_inset Formula $\tau S$
+\end_inset
+
+ and the ones on the right 
+\begin_inset Formula $(1-\tau)S$
+\end_inset
+
+.
+ Multiplying the number of samples by their weights, we get an equality:
+ 
+\begin_inset Formula 
+\[
+(\tau S)(1-\tau)=((1-\tau)S)(\tau)
+\]
+
+\end_inset
+
+so both sides 
+\emph on
+pull 
+\emph default
+with equal strength 
+\emph on
+if and only if 
+\emph default
+
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the 
+\begin_inset Formula $\tau$
+\end_inset
+
+ quantile.
+\end_layout
+
+\begin_layout Standard
+Basically, we need to scale the weights/gradients on the left of 
+\begin_inset Formula $\theta$
+\end_inset
+
+ by 
+\begin_inset Formula $1-\tau$
+\end_inset
+
+ and the ones on the right by 
+\begin_inset Formula $\tau$
+\end_inset
+
+, which are both nonnegative scalars, since 
+\begin_inset Formula $\tau\in[0,1]$
+\end_inset
+
+.
+ Here's a compact expression for that:
+\begin_inset Formula 
+\[
+|\tau-\delta_{X<\theta}|=\begin{cases}
+|\tau-1|=1-\tau & \text{if }X<\theta\\
+\tau & \text{if }X\geq\theta
+\end{cases}
+\]
+
+\end_inset
+
+Therefore, we just need to multiply the 
+\begin_inset Formula $|X-\theta|$
+\end_inset
+
+ in the loss
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:median_loss"
+
+\end_inset
+
+ by 
+\begin_inset Formula $|\tau-\delta_{X<\theta}|$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{align*}
+L_{\theta} & =\mathbb{E}_{X}[|X-\theta||\tau-\delta_{X<\theta}|]\\
+ & =\mathbb{E}_{X}[\rho_{\tau}(X-\theta)]
+\end{align*}
+
+\end_inset
+
+where
+\begin_inset Formula 
+\begin{align}
+\rho_{\tau}(u) & =|u||\tau-\delta_{u<0}|\label{eq:rho_t_abs}\\
+ & =u(\tau-\delta_{u<0})\label{eq:rho_t_no_abs}
+\end{align}
+
+\end_inset
+
+Note that we can eliminate the two absolute values because the two factors
+ have always the same sign.
+ Expression
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:rho_t_no_abs"
+
+\end_inset
+
+ is the one we find in equation (8) in 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "2017arXiv171010044D"
+
+\end_inset
+
+, but expression
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:rho_t_abs"
+
+\end_inset
+
+ makes it clearer that we can eliminate the 
+\emph on
+cuspid
+\emph default
+ in 
+\begin_inset Formula $\rho_{t}$
+\end_inset
+
+ by replacing 
+\begin_inset Formula $|u|$
+\end_inset
+
+ with the 
+\emph on
+Huber loss
+\emph default
+ defined as:
+\begin_inset Formula 
+\[
+\mathcal{L}_{\kappa}(u)=\begin{cases}
+\frac{1}{2}u^{2} & \text{if }|u|\leq\kappa\\
+\kappa(|u|-\frac{1}{2}\kappa) & \text{otherwise }
+\end{cases}
+\]
+
+\end_inset
+
+This makes optimization easier, according to the authors of 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "2017arXiv171010044D"
+
+\end_inset
+
+.
+ We're interested in 
+\begin_inset Formula $\mathcal{L}_{1}$
+\end_inset
+
+ in particular because it's the only one with the right slopes in the 
+\emph on
+linear parts
+\emph default
+.
+ Here's a picture of the two curves:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename rho_05.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now we can define 
+\begin_inset Formula $\rho_{\kappa}$
+\end_inset
+
+ as follows:
+\begin_inset Formula 
+\begin{align*}
+\rho_{\tau}^{0}(u) & =\rho_{\tau}(u)=u(\tau-\delta_{u<0})\\
+\rho_{\tau}^{\kappa}(u) & =\mathcal{L}_{\kappa}(u)|\tau-\delta_{u<0}|
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's a picture of 
+\begin_inset Formula $\rho_{0.3}$
+\end_inset
+
+ and 
+\begin_inset Formula $\rho_{0.3}^{1}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename rho_03.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The final loss becomes
+\begin_inset Formula 
+\[
+L_{\theta}=\mathbb{E}_{X}[\rho_{\tau}^{1}(X-\theta)]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Computing all the needed quantiles at once
+\end_layout
+
+\begin_layout Standard
+To compute more quantiles at once, we can just compute the total loss given
+ by
+\begin_inset Formula 
+\[
+L_{\theta}=\sum_{i=1}^{N}\mathbb{E}_{X}[\rho_{\tau_{i}}^{1}(X-\theta_{i})]
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\theta=(\theta_{1},\ldots,\theta_{N})$
+\end_inset
+
+ and we want 
+\begin_inset Formula $\theta_{i}$
+\end_inset
+
+ to be the 
+\begin_inset Formula $\tau_{i}$
+\end_inset
+
+ quantile.
+ Of course, in general we can write
+\begin_inset Formula 
+\begin{equation}
+L_{\theta}=\sum_{i=1}^{N}\mathbb{E}_{X}[\rho_{\tau_{i}}^{1}(X-f(\theta)_{i}]\label{eq:q_reg_formula}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $f$
+\end_inset
+
+ is some 
+\begin_inset Formula $\mathbb{R}^{N}$
+\end_inset
+
+-valued function of 
+\begin_inset Formula $\theta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Some code
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Some-code"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's the code for drawing picture
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:sliced_up_distrib"
+
+\end_inset
+
+ in subsection
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:A-different-idea"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{verbatim}
+\end_layout
+
+\begin_layout Plain Layout
+
+%%%%lyxblog-raw
+\end_layout
+
+\begin_layout Plain Layout
+
+{% highlight python %}
+\end_layout
+
+\begin_layout Plain Layout
+
+import tensorflow as tf
+\end_layout
+
+\begin_layout Plain Layout
+
+import matplotlib.pyplot as plt
+\end_layout
+
+\begin_layout Plain Layout
+
+import numpy as np
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+class Quantiles:
+\end_layout
+
+\begin_layout Plain Layout
+
+    def __init__(self, taus, tf_graph=None):
+\end_layout
+
+\begin_layout Plain Layout
+
+        self.taus = taus
+\end_layout
+
+\begin_layout Plain Layout
+
+        N = len(taus)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+        graph = tf_graph or tf.get_default_graph()
+\end_layout
+
+\begin_layout Plain Layout
+
+        with graph.as_default():
+\end_layout
+
+\begin_layout Plain Layout
+
+            with tf.variable_scope('quantiles'):
+\end_layout
+
+\begin_layout Plain Layout
+
+                self.xs = tf.placeholder('float')
+\end_layout
+
+\begin_layout Plain Layout
+
+                self.theta = tf.get_variable('theta', shape=(N,))
+\end_layout
+
+\begin_layout Plain Layout
+
+                self.loss = sum(
+\end_layout
+
+\begin_layout Plain Layout
+
+                    tf.reduce_mean(self._rho_tau(self.xs - self.theta[i],
+\end_layout
+
+\begin_layout Plain Layout
+
+                                                 taus[i], kappa=0))
+\end_layout
+
+\begin_layout Plain Layout
+
+                    for i in range(N))
+\end_layout
+
+\begin_layout Plain Layout
+
+                self.train_step = tf.train.AdamOptimizer(0.05).minimize(
+\end_layout
+
+\begin_layout Plain Layout
+
+                    self.loss)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    @staticmethod
+\end_layout
+
+\begin_layout Plain Layout
+
+    def _HL(u, kappa):
+\end_layout
+
+\begin_layout Plain Layout
+
+        delta = tf.cast(abs(u) <= kappa, 'float')
+\end_layout
+
+\begin_layout Plain Layout
+
+        return delta * (u * u / 2) + (1 - delta) * (
+\end_layout
+
+\begin_layout Plain Layout
+
+                kappa * (abs(u) - kappa / 2))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    @staticmethod
+\end_layout
+
+\begin_layout Plain Layout
+
+    def _rho_tau(u, tau, kappa=1):
+\end_layout
+
+\begin_layout Plain Layout
+
+        delta = tf.cast(u < 0, 'float')
+\end_layout
+
+\begin_layout Plain Layout
+
+        if kappa == 0:
+\end_layout
+
+\begin_layout Plain Layout
+
+            return (tau - delta) * u
+\end_layout
+
+\begin_layout Plain Layout
+
+        else:
+\end_layout
+
+\begin_layout Plain Layout
+
+            return abs(tau - delta) * Quantiles._HL(u, kappa)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    def get_quantiles(self, samples, loops):
+\end_layout
+
+\begin_layout Plain Layout
+
+        with tf.Session() as sess:
+\end_layout
+
+\begin_layout Plain Layout
+
+            tf.global_variables_initializer().run()
+\end_layout
+
+\begin_layout Plain Layout
+
+            for _ in range(loops):
+\end_layout
+
+\begin_layout Plain Layout
+
+                loss, _ = sess.run([self.loss, self.train_step],
+\end_layout
+
+\begin_layout Plain Layout
+
+                                   {self.xs: samples})
+\end_layout
+
+\begin_layout Plain Layout
+
+            qs = sess.run(self.theta)
+\end_layout
+
+\begin_layout Plain Layout
+
+        return qs
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+class MixtureOfGaussians:
+\end_layout
+
+\begin_layout Plain Layout
+
+    def __init__(self, pis, mus, sigmas):
+\end_layout
+
+\begin_layout Plain Layout
+
+        self.pis = pis
+\end_layout
+
+\begin_layout Plain Layout
+
+        self.mus = mus
+\end_layout
+
+\begin_layout Plain Layout
+
+        self.sigmas = sigmas
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    def draw_samples(self, n):
+\end_layout
+
+\begin_layout Plain Layout
+
+        samples = np.empty(n)
+\end_layout
+
+\begin_layout Plain Layout
+
+        for i in range(n):
+\end_layout
+
+\begin_layout Plain Layout
+
+            idx = np.random.multinomial(1, self.pis).argmax()
+\end_layout
+
+\begin_layout Plain Layout
+
+            samples[i] = np.random.normal(self.mus[idx], self.sigmas[idx])
+\end_layout
+
+\begin_layout Plain Layout
+
+        return samples
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    def pdf(self, x):
+\end_layout
+
+\begin_layout Plain Layout
+
+        return np.sum(pi * np.exp(-0.5 * ((x - mu) / s) ** 2) /
+\end_layout
+
+\begin_layout Plain Layout
+
+                        (s * np.sqrt(2 * pi))
+\end_layout
+
+\begin_layout Plain Layout
+
+                      for pi, mu, s in zip(self.pis, self.mus, self.sigmas))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+tf.reset_default_graph()
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+MoG = MixtureOfGaussians(pis=[1/3, 1/3, 1/3], mus=[-3, 0, 5], sigmas=[2,
+ 1, 2])
+\end_layout
+
+\begin_layout Plain Layout
+
+xs = np.linspace(-11, 11, num=200)
+\end_layout
+
+\begin_layout Plain Layout
+
+ys = MoG.pdf(xs)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+N = 10  # num of quantiles
+\end_layout
+
+\begin_layout Plain Layout
+
+taus = [i / (2 * N) for i in range(0, 2 * N + 1)]
+\end_layout
+
+\begin_layout Plain Layout
+
+Q = Quantiles(taus)
+\end_layout
+
+\begin_layout Plain Layout
+
+samples = MoG.draw_samples(10000)
+\end_layout
+
+\begin_layout Plain Layout
+
+qs = Q.get_quantiles(samples, loops=2000)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+plt.plot(xs, ys)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+for q in qs[::2]:
+\end_layout
+
+\begin_layout Plain Layout
+
+    plt.plot([q, q], [0, MoG.pdf(q)], 'black')
+\end_layout
+
+\begin_layout Plain Layout
+
+plt.plot(qs[1::2], np.zeros_like(qs[1::2]), 'or')
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+plt.savefig('quantiles.svg', bbox_inches='tight')
+\end_layout
+
+\begin_layout Plain Layout
+
+plt.show()
+\end_layout
+
+\begin_layout Plain Layout
+
+{% endhighlight %}
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{verbatim}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Definition of the Wasserstein metric
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $X$
+\end_inset
+
+ and 
+\begin_inset Formula $Y$
+\end_inset
+
+ be two 
+\emph on
+scalar
+\emph default
+ random variables and 
+\begin_inset Formula $F_{X}$
+\end_inset
+
+ and 
+\begin_inset Formula $F_{Y}$
+\end_inset
+
+ their 
+\emph on
+CDFs
+\emph default
+.
+ Then, their 
+\emph on
+
+\begin_inset Formula $p$
+\end_inset
+
+-Wasserstein distance
+\emph default
+ is
+\begin_inset Formula 
+\[
+\mathcal{W}_{p}(X,Y)=\left(\int_{0}^{1}\left|F_{X}^{-1}(u)-F_{Y}^{-1}(u)\right|^{p}du\right)^{1/p}
+\]
+
+\end_inset
+
+We'll use the 
+\begin_inset Formula $1$
+\end_inset
+
+-Wasserstein distance (i.e.
+ with 
+\begin_inset Formula $p=1$
+\end_inset
+
+) which measures the difference between the CDFs by measuring the area of
+ a 
+\begin_inset Quotes eld
+\end_inset
+
+discrepancy region
+\begin_inset Quotes erd
+\end_inset
+
+ (the 
+\color cyan
+cyan
+\color inherit
+ region in the picture):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename wasserstein.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now note that the CDF of a distribution represented by atoms 
+\begin_inset Formula $y_{1},\ldots,y_{N}$
+\end_inset
+
+ of probability mass 
+\begin_inset Formula $q$
+\end_inset
+
+ is a step function:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename wasserstein_step.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\color cyan
+cyan 
+\color inherit
+region, and thus the Wasserstein distance, is reduced when we slice up the
+ 
+\color red
+red
+\color inherit
+ curve into 
+\begin_inset Formula $q$
+\end_inset
+
+-mass slices and choose our atoms so that they halves the mass of each slice:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename wasserstein_optim.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that in the picture above
+\begin_inset Formula 
+\[
+\hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N
+\]
+
+\end_inset
+
+with 
+\begin_inset Formula $N=12$
+\end_inset
+
+.
+ The positions of our atoms are
+\begin_inset Formula 
+\[
+y_{i}=F_{X}^{-1}(\hat{\tau}_{i}),\qquad i=1,\ldots,N
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $X$
+\end_inset
+
+ is the variable associated with the 
+\color red
+red
+\color inherit
+ CDF.
+\end_layout
+
+\begin_layout Standard
+Here's what we get with 
+\begin_inset Formula $30$
+\end_inset
+
+ atoms:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename wasserstein_optim_30.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So, it seems to be working!
+\end_layout
+
+\begin_layout Subsection
+The full algorithm
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:The-full-algorithm"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's the full algorithm taken directly (cut & pasted) from 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "2017arXiv171010044D"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename W_algo.png
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As before, let's assume we've just picked 
+\begin_inset Formula $(x,a,r,x')$
+\end_inset
+
+ from the 
+\emph on
+replay buffer
+\emph default
+ in some variant of the DQN algorithm, so 
+\begin_inset Formula $x$
+\end_inset
+
+ is used to indicate 
+\emph on
+states
+\emph default
+.
+ The algorithm is quite simple:
+\end_layout
+
+\begin_layout Enumerate
+We recover 
+\begin_inset Formula $Q(x')$
+\end_inset
+
+ from 
+\begin_inset Formula $Z(x')$
+\end_inset
+
+ returned by our net.
+ We can assume that 
+\begin_inset Formula $q_{j}=\frac{1}{N}$
+\end_inset
+
+, i.e.
+ the atoms have the same weight.
+\end_layout
+
+\begin_layout Enumerate
+We find 
+\begin_inset Formula $a^{*}$
+\end_inset
+
+ which is the optimal action according to 
+\begin_inset Formula $Q(x'$
+\end_inset
+
+) (there's a typo in the code).
+\end_layout
+
+\begin_layout Enumerate
+Remember that the network, given a state (
+\begin_inset Formula $x'$
+\end_inset
+
+ in this case), returns a 
+\emph on
+matrix
+\emph default
+ where each row contains the 
+\begin_inset Formula $N$
+\end_inset
+
+ atoms for a particular action.
+ Let 
+\begin_inset Formula $\theta'_{1},\ldots,\theta'_{N}$
+\end_inset
+
+ be the atoms of 
+\begin_inset Formula $Z(x',a^{*})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+We treat the atoms 
+\begin_inset Formula $\theta'_{1},\ldots,\theta'_{N}$
+\end_inset
+
+ as samples and transform them directly:
+\begin_inset Formula 
+\[
+\mathcal{T}\theta'_{j}=r+\gamma\theta'_{j},\qquad i=1,\ldots,N
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Let 
+\begin_inset Formula $\theta_{1},\ldots,\theta_{N}$
+\end_inset
+
+ be the atoms of 
+\begin_inset Formula $Z(x,a)$
+\end_inset
+
+.
+ We want to reduce the Wasserstein distance between 
+\begin_inset Formula $Z(x,a)$
+\end_inset
+
+ and 
+\begin_inset Formula $r+\gamma Z(x',a^{*})$
+\end_inset
+
+ by optimizing 
+\begin_inset Formula $Z(x,a)$
+\end_inset
+
+.
+ As always, the target 
+\begin_inset Formula $r+\gamma Z(x',a^{*})$
+\end_inset
+
+ is treated as a constant for stability reasons (and we even use 
+\emph on
+target freezing
+\emph default
+ for extra stability).
+\begin_inset Newline newline
+\end_inset
+
+We have 
+\begin_inset Formula $N$
+\end_inset
+
+ samples for the target distribution, that is 
+\begin_inset Formula $\mathcal{T}\theta'_{1},\ldots,\mathcal{T}\theta'_{j}$
+\end_inset
+
+.
+ So, we can use formula
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:q_reg_formula"
+
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+L_{\theta}=\sum_{i=1}^{N}\mathbb{E}_{X}\left[\rho_{\tau_{i}}^{1}(X-f(\theta)_{i})\right]
+\]
+
+\end_inset
+
+In our case, the formula becomes
+\begin_inset Formula 
+\begin{align*}
+L_{\theta} & =\sum_{i=1}^{N}\mathbb{E}_{X}\left[\rho_{\tau_{i}}^{1}(X-f(\theta)_{i})\right]\\
+ & =\sum_{i=1}^{N}\mathbb{E}_{\mathcal{T}Z'}\left[\rho_{\hat{\tau}_{i}}^{1}(\mathcal{T}Z'-\theta_{i})\right],\qquad\mathcal{T}Z'=r+\gamma Z(x',a^{*})\\
+ & =\frac{1}{N}\sum_{i=1}^{N}\sum_{j=1}^{N}\left[\rho_{\hat{\tau}_{i}}^{1}(\mathcal{T}\theta'_{j}-\theta_{i})\right]
+\end{align*}
+
+\end_inset
+
+where
+\begin_inset Formula 
+\[
+\hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Why don't we use simple regression?
+\end_layout
+
+\begin_layout Standard
+Both the 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+moving
+\begin_inset Quotes erd
+\end_inset
+
+ distribution
+\emph default
+ and the 
+\emph on
+target distribution
+\emph default
+ are represented by 
+\begin_inset Formula $N$
+\end_inset
+
+ atoms each of weight 
+\begin_inset Formula $1/N$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename wasserstein_both.svg
+	width 80text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So why don't we avoid sampling and use simple regression? That is:
+\begin_inset Formula 
+\begin{equation}
+L_{\theta}=\sum_{i=1}^{N}(\theta_{i}-\theta'_{i})^{2}\label{eq:simple_reg_loss}
+\end{equation}
+
+\end_inset
+
+The problem is that the atom positions 
+\begin_inset Formula $\theta_{1},\ldots,\theta_{N}$
+\end_inset
+
+ and 
+\begin_inset Formula $\theta'_{1},\ldots,\theta'_{N}$
+\end_inset
+
+ returned by the network are not guaranteed to be in any particular order,
+ especially before convergence.
+\end_layout
+
+\begin_layout Standard
+Note that the method described in subsection
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:The-full-algorithm"
+
+\end_inset
+
+ doesn't require that the atom positions be ordered from smaller to bigger.
+ First, the 
+\emph on
+target
+\emph default
+ positions needn't be sorted because they're just used as 
+\emph on
+samples
+\emph default
+.
+ Second, the 
+\emph on
+moving
+\emph default
+ positions (i.e.
+ the ones we want to update) can also be in any order because they're trained
+ 
+\begin_inset Quotes eld
+\end_inset
+
+independently
+\begin_inset Quotes erd
+\end_inset
+
+: each atom will be moved towards the right position indicated by its correspond
+ing 
+\begin_inset Formula $\hat{\tau}_{i}$
+\end_inset
+
+ irrespective of the positions and order of the other 
+\begin_inset Quotes eld
+\end_inset
+
+moving
+\begin_inset Quotes erd
+\end_inset
+
+ atoms.
+\end_layout
+
+\begin_layout Standard
+I don't know if this is a problem in the RL setting, but when I wrote the
+ code to draw picture
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:sliced_up_distrib"
+
+\end_inset
+
+ (shown in subsection
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Some-code"
+
+\end_inset
+
+), I noticed that 
+\emph on
+quantile regression
+\emph default
+ requires many samples and quite a lot of training to get good results.
+ In particular, since we're using samples, the quality is especially low
+ in intervals of low probability mass.
+\end_layout
+
+\begin_layout Standard
+Moreover, note that, in the code, I used 
+\begin_inset Formula $\rho_{\tau}^{0}$
+\end_inset
+
+, the curve with the cuspid, and not 
+\begin_inset Formula $\rho_{\tau}^{1}$
+\end_inset
+
+, the smoothed out one, because I was getting worse results with the latter.
+ Indeed, by replacing the 
+\begin_inset Quotes eld
+\end_inset
+
+cuspid part
+\begin_inset Quotes erd
+\end_inset
+
+ with a quadratic, we treat the samples which fall in the quadratic part
+ as if we were computing the 
+\emph on
+mean
+\emph default
+ rather than the 
+\emph on
+median
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+One possible solution might be to return nonnegative distances between the
+ points and then reconstruct the absolute positions of the atoms, which
+ is very easy to do.
+ This way we could use loss
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:simple_reg_loss"
+
+\end_inset
+
+ which is much more efficient.
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintAll"
+bibfiles "BellemareDM17,quantile_rl,DQN"
+options "plainnat"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

@@ -1,0 +1,9 @@
+*.log
+*.lyx~
+*.lyx.emergency
+*.eps
+*.pdf
+texput.aux
+texput.log
+__pycache__
+.ipynb_checkpoints
