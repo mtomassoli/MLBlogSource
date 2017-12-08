@@ -29,19 +29,10 @@ void draw_samples(real[] xs, pen my_pen=black) {
         fill(circle((xs[i],-0.25),sample_radius), my_pen);
 }
 
-real[] xs = {0.5, 1.2, 2.3, 2.8, 3.2, 3.4, 3.6, 5, 5.4, 5.7, 6, 7};
+real[] xs = {0.5, 1.2, 1.8, 2.8, 3.2, 3.4, 3.6, 5, 5.4, 5.7, 6, 6.8};
 path p = get_step_func(xs);
-
-real[] xs2;
-real r = 4;
-real gamma = 0.7;
-for (int i = 0; i < xs.length; ++i)
-    xs2[i] = r + gamma*xs[i];
-
-draw_samples(xs, blue);
-draw_samples(xs2, red);
-
-path q = get_step_func(xs2);
+real[] ys = {0.9, 1.1, 2.6, 2.7, 3.9, 3.95, 4, 4.3, 4.7, 6, 6.5, 7.5};
+path q = get_step_func(ys);
 
 fill(p..reverse(q)..cycle, evenodd+lightcyan);
 draw(p, blue+linewidth(1.6));
@@ -59,4 +50,4 @@ label("$Z(x,a)$", (1,y-radius/4), 5*E, fs);
 
 y -= height * 1/10;
 filldraw(circle((1,y), radius), red);
-label("$r+\gamma Z(x,a)$", (1,y-radius/4), 5*E, fs);
+label("$r+\gamma Z(x',a^*)$", (1,y-radius/4), 5*E, fs);
