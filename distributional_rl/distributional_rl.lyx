@@ -215,9 +215,16 @@ function approximation
 \emph default
  we want to minimize the error
 \begin_inset Formula 
+\[
+\mathbb{E}_{s,a}\left[\left(r(s,a)+\gamma\mathbb{E}_{s'}\left[\max_{a'}Q(s',a')\right]-Q(s,a)\right)^{2}\right],
+\]
+
+\end_inset
+
+which is equivalent to minimizing
+\begin_inset Formula 
 \begin{align}
-\mathbb{E}_{s,a}\left[\left(r(s,a)+\gamma\mathbb{E}_{s'}\left[\max_{a'}Q(s',a')\right]-Q(s,a)\right)^{2}\right] & =\nonumber \\
-\mathbb{E}_{s,a,s'}\left[\left(r(s,a)+\gamma\max_{a'}Q(s',a')-Q(s,a)\right)^{2}\right]\label{eq:classic_td_error}
+\mathbb{E}_{s,a,s'}\left[\left(r(s,a)+\gamma\max_{a'}Q(s',a')-Q(s,a)\right)^{2}\right],\label{eq:classic_td_error}
 \end{align}
 
 \end_inset
