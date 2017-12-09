@@ -36,15 +36,15 @@ minimize the error
 \[
 \mathbb{E}_{s,a}\left[\left(r(s,a)+\gamma\mathbb{E}_{s'}\left[\max_{a'}Q(s',a')\right]-Q(s,a)\right)^{2}\right],
 \]
-which is equivalent to minimizing
+or, equivalently,
 $$\begin{align}
 \mathbb{E}_{s,a,s'}\left[\left(r(s,a)+\gamma\max_{a'}Q(s',a')-Q(s,a)\right)^{2}\right],\label{eq:classic_td_error}
 \end{align}$$
-by moving $Q(s,a)$ towards the \emph{target} $r(s,a)+\gamma\max_{a'}Q(s',a')$,
 where $r(s,a)$ is the \emph{expected immediate reward}. In \emph{semi-gradient
-}methods we pretend that the target is constant and in \emph{DQN\citep{mnih2015human}}
-we even \emph{freeze }the ``target network'' to improve stability
-even further.
+}methods we do this by moving $Q(s,a)$ towards the \emph{target}
+$r(s,a)+\gamma\max_{a'}Q(s',a')$, pretending that the target is constant,
+and in \emph{DQN\citep{mnih2015human}} we even \emph{freeze }the
+``target network'' to improve stability even further.
 
 The main idea of \emph{Distributional RL\citep{DBLP:journals/corr/BellemareDM17}
 }is to work directly with the \emph{full distribution} of the return
