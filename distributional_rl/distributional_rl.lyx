@@ -1254,7 +1254,7 @@ Let's go through the algorithm in detail assuming we're using a neural network
 \end_layout
 
 \begin_layout Enumerate
-We fead 
+We feed 
 \begin_inset Formula $x_{t+1}$
 \end_inset
 
