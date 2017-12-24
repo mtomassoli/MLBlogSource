@@ -29,9 +29,9 @@ void draw_samples(real[] xs, pen my_pen=black) {
         fill(circle((xs[i],-0.25),sample_radius), my_pen);
 }
 
-real[] xs = {0.5, 1.2, 1.8, 2.8, 3.2, 3.4, 3.6, 5, 5.4, 5.7, 6, 6.8};
+real[] xs = {0.5, 1.2, 2.3, 2.8, 3.2, 3.4, 3.6, 5, 5.4, 5.7, 6, 7};
 path p = get_step_func(xs);
-real[] ys = {0.9, 1.1, 2.6, 2.7, 3.9, 3.95, 4, 4.3, 4.7, 6, 6.5, 7.5};
+real[] ys = {0.9, 1.9, 2.6, 2.7, 3.9, 3.95, 4, 4.3, 4.7, 6, 6.5, 6.9};
 path q = get_step_func(ys);
 
 fill(p..reverse(q)..cycle, evenodd+lightcyan);

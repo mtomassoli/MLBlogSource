@@ -140,21 +140,25 @@ $q$ have different supports, the KL is undefined.
 \subsection{How to use it}
 
 Now say we're using DQN and extract $(s,a,r,s')$ from the \emph{replay
-buffer}. A \emph{sample }of the target distribution is $r+\gamma Z(s',a^{*})$,
+buffer}. A ``\emph{sample }of the target distribution'' is $r+\gamma Z(s',a^{*})$,
 where $a^{*}=\mathrm{arg\,max}_{a'}Q(s',a')$. We want to move $Z(s,a)$
 towards this target (by keeping the target fixed).
 
-I called $r+\gamma Z(s',a^{*})$ a \emph{sample} of a distribution,
-which might sound like a contradiction in terms, but it isn't. This
-is just a sample because $r$ and $s'$ are not random variables,
-but just samples. We still get a distribution though since $Z(s',a^{*})$
-is a distribution. Indeed, to get a \emph{single} sample \textbf{\emph{from}}
-the \emph{real} distribution, we should first sample $r$ and $s'$,
-and, finally, sample from the distribution $r+\gamma Z(s',a^{*})$.
-Note that this is almost exactly what we're doing since $r$ and $s'$
-extracted from the replay buffer were indeed sampled. The only difference
-is that instead of sampling from $r+\gamma Z(s',a^{*})$, we use the
-full distribution (but based, again, on just samples of $r$ and $s'$).
+\label{para:sample_of_a_distr=00007B(link to relevant paragraph)=00007D}I
+called $r+\gamma Z(s',a^{*})$ a ``\emph{sample} of a distribution'',
+but the correct way to say it is that $r+\gamma Z(s',a^{*})$ is a
+\emph{collection of samples} of the real target distribution. The
+target distribution we want to learn is $r+\gamma Z(s',a^{*})$ where
+$r$ and $s'$ are \textbf{\emph{random variables}}. Since we sampled
+$r$ and $s'$, then the atoms of $r+\gamma Z(s',a^{*})$ are just
+samples from the real target distribution and \textbf{not} a representation
+in atom form of that distribution. Indeed, to get a \emph{single}
+sample from the \emph{real} target distribution, we should first sample
+$r$ and $s'$, and, finally, sample from the distribution $r+\gamma Z(s',a^{*})$.
+This is almost exactly what we're doing since $r$ and $s'$ extracted
+from the replay buffer were indeed sampled. The only difference is
+that instead of sampling from $r+\gamma Z(s',a^{*})$, we use all
+its atoms.
 
 Let's say we have a net which models $Z$ by taking a state $s$ and
 returning a distribution $Z(s,a)$ for each action. For instance,
@@ -357,7 +361,9 @@ of
 \[
 \hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N
 \]
+as shown in the following picture:
 
+\includegraphics{quantiles_comb}
 
 \subsection{How do we determine a quantile?}
 
@@ -714,6 +720,68 @@ One possible solution might be to return nonnegative distances between
 the points and then reconstruct the absolute positions of the atoms,
 which is very easy to do. This way we could use loss~$\ref{eq:simple_reg_loss}$
 which is much more efficient.
+
+\subsubsection{A more fundamental reason}
+
+Will Dabney, one of the authors of the papers, \href{https://www.reddit.com/r/MachineLearning/comments/7ii7ji/d_an_intuitive_explanation_of_distributional_rl/drgtzol/}{pointed out}
+that there's a more fundamental reason why we can't use simple regression:
+we might not find the correct quantiles!
+
+I think Dabney tried to be tactful with his response, but the truth
+is that I didn't think this through. I was focusing on getting faster
+convergence and forgot about what I wrote about $r+\gamma Z(s',a^{*})$
+being just a ``sample'' of the real distribution $\ref{para:sample_of_a_distr=00007B(link to relevant paragraph)=00007D}$.
+
+Let's say we want to determine the\emph{ median} of the distribution
+$r+\gamma Z(s',a^{*})$, where $r$ and $s'$ are both random variables.
+We focus on the median just for simplicity: this argument clearly
+applies to any quantiles.
+
+We initialize the median of $Z(s,a)$ to an initial guess $\theta$
+and then, at each step:
+\begin{enumerate}
+\item we get $N$ samples of the real target distribution $r+\gamma Z(s',a^{*})$,
+\item we compute the median of the $N$ samples we just received,
+\item we use the median to update $\theta$.
+\end{enumerate}
+Basically, if $m_{1},m_{2},\ldots$ is the sequence of medians, we
+end up computing $\theta$ this way:
+\[
+\hat{\theta}=\underset{\theta}{\mathrm{arg\,min}}\sum_{i}(m_{i}-\theta)^{2}
+\]
+This doesn't give us the correct median because
+\[
+\hat{\theta}=\sum_{i}m_{i}
+\]
+but \emph{the median of all the samples is }\textbf{\emph{not}}\emph{
+the }\textbf{\emph{mean}}\emph{ of the medians}. This is easy to see
+with a picture:
+
+\includegraphics[width=0.8\textwidth]{bias_L2}\\
+$B_{1},B_{2},\ldots$ are the ``batches'' of $N=5$ atoms and the
+medians $m_{1},m_{2},\ldots$ are indicated by \textcolor{red}{red}
+circles. In this example, we keep receiving the same two batches (the
+blue and the green one) over and over. The correct solution is clearly
+$\theta^{*}$ because it has half samples on the left and half on
+the right, but by using simple regression we get $\theta^{\mathrm{wrong}}$,
+which, as you can see, is the mean of the medians.
+
+And if we used the L1 loss instead? That is,
+\[
+\hat{\theta}=\underset{\theta}{\mathrm{arg\,min}}\sum_{i}|m_{i}-\theta|
+\]
+This still wouldn't work since \emph{the median of all the samples
+is }\textbf{\emph{not}}\emph{ the }\textbf{\emph{median}}\emph{ of
+the medians}. The following picture should make that obvious:
+
+\includegraphics[width=0.8\textwidth]{bias_L1}\\
+If our initial guess is $\theta^{\mathrm{wrong}}$ and the learning
+rate, $\alpha$, is small enough, we won't make any progress since
+we'll keep adding $\alpha$ and $-\alpha$ to $\theta$. Note that
+$\theta^{\mathrm{wrong}}$ is indeed the median of the medians, but
+so is $\theta^{*}$, according to the samples. Since no medians fall
+between $\theta^{*}$ and $\theta^{\mathrm{wrong}}$ in our example,
+the optimization algorithm can't tell the two solutions apart.
 
 \bibliographystyle{plainnat}
 \nocite{*}

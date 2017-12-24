@@ -677,10 +677,18 @@ replay buffer
 \emph default
 .
  A 
+\begin_inset Quotes eld
+\end_inset
+
+
 \emph on
 sample 
 \emph default
-of the target distribution is 
+of the target distribution
+\begin_inset Quotes erd
+\end_inset
+
+ is 
 \begin_inset Formula $r+\gamma Z(s',a^{*})$
 \end_inset
 
@@ -697,17 +705,42 @@ of the target distribution is
 \end_layout
 
 \begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "para:sample_of_a_distr{(link to relevant paragraph)}"
+
+\end_inset
+
 I called 
 \begin_inset Formula $r+\gamma Z(s',a^{*})$
 \end_inset
 
  a 
+\begin_inset Quotes eld
+\end_inset
+
+
 \emph on
 sample
 \emph default
- of a distribution, which might sound like a contradiction in terms, but
- it isn't.
- This is just a sample because 
+ of a distribution
+\begin_inset Quotes erd
+\end_inset
+
+, but the correct way to say it is that 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+ is a 
+\emph on
+collection of samples
+\emph default
+ of the real target distribution.
+ The target distribution we want to learn is 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+ where 
 \begin_inset Formula $r$
 \end_inset
 
@@ -715,27 +748,39 @@ sample
 \begin_inset Formula $s'$
 \end_inset
 
- are not random variables, but just samples.
- We still get a distribution though since 
-\begin_inset Formula $Z(s',a^{*})$
+ are 
+\series bold
+\emph on
+random variables
+\series default
+\emph default
+.
+ Since we sampled 
+\begin_inset Formula $r$
 \end_inset
 
- is a distribution.
+ and 
+\begin_inset Formula $s'$
+\end_inset
+
+, then the atoms of 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+ are just samples from the real target distribution and 
+\series bold
+not
+\series default
+ a representation in atom form of that distribution.
  Indeed, to get a 
 \emph on
 single
 \emph default
- sample 
-\series bold
-\emph on
-from
-\series default
-\emph default
- the 
+ sample from the 
 \emph on
 real
 \emph default
- distribution, we should first sample 
+ target distribution, we should first sample 
 \begin_inset Formula $r$
 \end_inset
 
@@ -748,7 +793,7 @@ real
 \end_inset
 
 .
- Note that this is almost exactly what we're doing since 
+ This is almost exactly what we're doing since 
 \begin_inset Formula $r$
 \end_inset
 
@@ -785,15 +830,7 @@ real
 \begin_inset Formula $r+\gamma Z(s',a^{*})$
 \end_inset
 
-, we use the full distribution (but based, again, on just samples of 
-\begin_inset Formula $r$
-\end_inset
-
- and 
-\begin_inset Formula $s'$
-\end_inset
-
-).
+, we use all its atoms.
 \end_layout
 
 \begin_layout Standard
@@ -1720,6 +1757,15 @@ If the atoms are
 \[
 \hat{\tau}_{i}=\frac{2(i-1)+1}{2N},\qquad i=1,\ldots,N
 \]
+
+\end_inset
+
+as shown in the following picture:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename quantiles_comb.svg
 
 \end_inset
 
@@ -3306,6 +3352,280 @@ reference "eq:simple_reg_loss"
 \end_inset
 
  which is much more efficient.
+\end_layout
+
+\begin_layout Subsubsection
+A more fundamental reason
+\end_layout
+
+\begin_layout Standard
+Will Dabney, one of the authors of the papers, 
+\begin_inset CommandInset href
+LatexCommand href
+name "pointed out"
+target "https://www.reddit.com/r/MachineLearning/comments/7ii7ji/d_an_intuitive_explanation_of_distributional_rl/drgtzol/"
+
+\end_inset
+
+ that there's a more fundamental reason why we can't use simple regression:
+ we might not find the correct quantiles!
+\end_layout
+
+\begin_layout Standard
+I think Dabney tried to be tactful with his response, but the truth is that
+ I didn't think this through.
+ I was focusing on getting faster convergence and forgot about what I wrote
+ about 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+ being just a 
+\begin_inset Quotes eld
+\end_inset
+
+sample
+\begin_inset Quotes erd
+\end_inset
+
+ of the real distribution 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "para:sample_of_a_distr{(link to relevant paragraph)}"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Let's say we want to determine the
+\emph on
+ median
+\emph default
+ of the distribution 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+, where 
+\begin_inset Formula $r$
+\end_inset
+
+ and 
+\begin_inset Formula $s'$
+\end_inset
+
+ are both random variables.
+ We focus on the median just for simplicity: this argument clearly applies
+ to any quantiles.
+\end_layout
+
+\begin_layout Standard
+We initialize the median of 
+\begin_inset Formula $Z(s,a)$
+\end_inset
+
+ to an initial guess 
+\begin_inset Formula $\theta$
+\end_inset
+
+ and then, at each step:
+\end_layout
+
+\begin_layout Enumerate
+we get 
+\begin_inset Formula $N$
+\end_inset
+
+ samples of the real target distribution 
+\begin_inset Formula $r+\gamma Z(s',a^{*})$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Enumerate
+we compute the median of the 
+\begin_inset Formula $N$
+\end_inset
+
+ samples we just received,
+\end_layout
+
+\begin_layout Enumerate
+we use the median to update 
+\begin_inset Formula $\theta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Basically, if 
+\begin_inset Formula $m_{1},m_{2},\ldots$
+\end_inset
+
+ is the sequence of medians, we end up computing 
+\begin_inset Formula $\theta$
+\end_inset
+
+ this way:
+\begin_inset Formula 
+\[
+\hat{\theta}=\underset{\theta}{\mathrm{arg\,min}}\sum_{i}(m_{i}-\theta)^{2}
+\]
+
+\end_inset
+
+This doesn't give us the correct median because
+\begin_inset Formula 
+\[
+\hat{\theta}=\sum_{i}m_{i}
+\]
+
+\end_inset
+
+but 
+\emph on
+the median of all the samples is 
+\series bold
+not
+\series default
+ the 
+\series bold
+mean
+\series default
+ of the medians
+\emph default
+.
+ This is easy to see with a picture:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename bias_L2.svg
+	width 80text%
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $B_{1},B_{2},\ldots$
+\end_inset
+
+ are the 
+\begin_inset Quotes eld
+\end_inset
+
+batches
+\begin_inset Quotes erd
+\end_inset
+
+ of 
+\begin_inset Formula $N=5$
+\end_inset
+
+ atoms and the medians 
+\begin_inset Formula $m_{1},m_{2},\ldots$
+\end_inset
+
+ are indicated by 
+\color red
+red
+\color inherit
+ circles.
+ In this example, we keep receiving the same two batches (the blue and the
+ green one) over and over.
+ The correct solution is clearly 
+\begin_inset Formula $\theta^{*}$
+\end_inset
+
+ because it has half samples on the left and half on the right, but by using
+ simple regression we get 
+\begin_inset Formula $\theta^{\mathrm{wrong}}$
+\end_inset
+
+, which, as you can see, is the mean of the medians.
+\end_layout
+
+\begin_layout Standard
+And if we used the L1 loss instead? That is,
+\begin_inset Formula 
+\[
+\hat{\theta}=\underset{\theta}{\mathrm{arg\,min}}\sum_{i}|m_{i}-\theta|
+\]
+
+\end_inset
+
+This still wouldn't work since 
+\emph on
+the median of all the samples is 
+\series bold
+not
+\series default
+ the 
+\series bold
+median
+\series default
+ of the medians
+\emph default
+.
+ The following picture should make that obvious:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename bias_L1.svg
+	width 80text%
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+If our initial guess is 
+\begin_inset Formula $\theta^{\mathrm{wrong}}$
+\end_inset
+
+ and the learning rate, 
+\begin_inset Formula $\alpha$
+\end_inset
+
+, is small enough, we won't make any progress since we'll keep adding 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ and 
+\begin_inset Formula $-\alpha$
+\end_inset
+
+ to 
+\begin_inset Formula $\theta$
+\end_inset
+
+.
+ Note that 
+\begin_inset Formula $\theta^{\mathrm{wrong}}$
+\end_inset
+
+ is indeed the median of the medians, but so is 
+\begin_inset Formula $\theta^{*}$
+\end_inset
+
+, according to the samples.
+ Since no medians fall between 
+\begin_inset Formula $\theta^{*}$
+\end_inset
+
+ and 
+\begin_inset Formula $\theta^{\mathrm{wrong}}$
+\end_inset
+
+ in our example, the optimization algorithm can't tell the two solutions
+ apart.
 \end_layout
 
 \begin_layout Standard
