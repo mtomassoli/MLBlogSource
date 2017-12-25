@@ -3508,10 +3508,9 @@ mean
 \end_inset
 
 
-\begin_inset Newline newline
-\end_inset
+\end_layout
 
-
+\begin_layout Standard
 \begin_inset Formula $B_{1},B_{2},\ldots$
 \end_inset
 
@@ -3583,9 +3582,9 @@ median
 \end_inset
 
 
-\begin_inset Newline newline
-\end_inset
+\end_layout
 
+\begin_layout Standard
 If our initial guess is 
 \begin_inset Formula $\theta^{\mathrm{wrong}}$
 \end_inset

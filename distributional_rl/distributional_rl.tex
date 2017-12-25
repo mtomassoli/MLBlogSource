@@ -757,7 +757,8 @@ but \emph{the median of all the samples is }\textbf{\emph{not}}\emph{
 the }\textbf{\emph{mean}}\emph{ of the medians}. This is easy to see
 with a picture:
 
-\includegraphics[width=0.8\textwidth]{bias_L2}\\
+\includegraphics[width=0.8\textwidth]{bias_L2}
+
 $B_{1},B_{2},\ldots$ are the ``batches'' of $N=5$ atoms and the
 medians $m_{1},m_{2},\ldots$ are indicated by \textcolor{red}{red}
 circles. In this example, we keep receiving the same two batches (the
@@ -774,7 +775,8 @@ This still wouldn't work since \emph{the median of all the samples
 is }\textbf{\emph{not}}\emph{ the }\textbf{\emph{median}}\emph{ of
 the medians}. The following picture should make that obvious:
 
-\includegraphics[width=0.8\textwidth]{bias_L1}\\
+\includegraphics[width=0.8\textwidth]{bias_L1}
+
 If our initial guess is $\theta^{\mathrm{wrong}}$ and the learning
 rate, $\alpha$, is small enough, we won't make any progress since
 we'll keep adding $\alpha$ and $-\alpha$ to $\theta$. Note that

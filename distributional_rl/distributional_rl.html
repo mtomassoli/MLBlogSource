@@ -269,10 +269,12 @@ L_{\theta} &amp; =\sum_{i=1}^{N}\mathbb{E}_{X}\left[\rho_{\tau_{i}}^{1}(X-f(\the
 <figure>
 <img src="/assets/2017-12-08-distributional_rl/bias_L2.svg" alt="Figure 15." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 15.</em></figcaption>
 </figure>
+<p><span class="math inline">\(B_{1},B_{2},\ldots\)</span> are the “batches” of <span class="math inline">\(N=5\)</span> atoms and the medians <span class="math inline">\(m_{1},m_{2},\ldots\)</span> are indicated by <span style="color: red">red</span> circles. In this example, we keep receiving the same two batches (the blue and the green one) over and over. The correct solution is clearly <span class="math inline">\(\theta^{*}\)</span> because it has half samples on the left and half on the right, but by using simple regression we get <span class="math inline">\(\theta^{\mathrm{wrong}}\)</span>, which, as you can see, is the mean of the medians.</p>
 <p>And if we used the L1 loss instead? That is, <span class="math display">\[\begin{align*}\hat{\theta}=\underset{\theta}{\mathrm{arg\,min}}\sum_{i}|m_{i}-\theta|\end{align*}\]</span> This still wouldn’t work since <em>the median of all the samples is</em> <strong><em>not</em></strong> <em>the</em> <strong><em>median</em></strong> <em>of the medians</em>. The following picture should make that obvious:</p>
 <figure>
 <img src="/assets/2017-12-08-distributional_rl/bias_L1.svg" alt="Figure 16." class="86345huihsdfguhsjlkertvxgkh3498asdg:10.0%" style="width:100.0%" /><figcaption><em>Figure 16.</em></figcaption>
 </figure>
+<p>If our initial guess is <span class="math inline">\(\theta^{\mathrm{wrong}}\)</span> and the learning rate, <span class="math inline">\(\alpha\)</span>, is small enough, we won’t make any progress since we’ll keep adding <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(-\alpha\)</span> to <span class="math inline">\(\theta\)</span>. Note that <span class="math inline">\(\theta^{\mathrm{wrong}}\)</span> is indeed the median of the medians, but so is <span class="math inline">\(\theta^{*}\)</span>, according to the samples. Since no medians fall between <span class="math inline">\(\theta^{*}\)</span> and <span class="math inline">\(\theta^{\mathrm{wrong}}\)</span> in our example, the optimization algorithm can’t tell the two solutions apart.</p>
 
 <h1 id="bibliography" class="unnumbered">Bibliography</h1>
 <div id="refs" class="references">
